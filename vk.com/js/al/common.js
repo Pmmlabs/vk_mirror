@@ -4388,7 +4388,7 @@ function handlePageView(params) {
 function handleSetCount(e, v, id) {
   var newCnt = '', attr = '', maxCntLen = (id == 'spr') ? 5 : 3,
       newCntWrap = '<span class="inl_bl left_count_sign"></span>',
-      curCntWp = geByClass1('left_count_wrap', e, 'span'),
+      curCntWp = geByClass1('left_count_wrap', e),
       curOver = hasClass(geByClass1('left_row', e, 'a'), 'left_nav_over'),
       curCntEl = geByClass1('left_count', e, 'span'), curCntV = val(curCntEl);
   if (v) {
