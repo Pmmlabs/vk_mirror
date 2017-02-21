@@ -8282,8 +8282,11 @@ TopSearch = {
       // todo: seems that these call are not necessary because of topHeaderClose function was added
       //TopSearch.toggleInput(false);
       //TopMenu.toggle(false);
-      if (!checkKeyboardEvent(e) && !domClosest('_audio_layer', e.target) && !domClosest('layer_wrap', e.target)) {
-        _topHeaderClose();
+
+      if (!checkKeyboardEvent(e)
+        && !domClosest('_audio_layer', e.target)
+        && !domClosest('layer_wrap', e.target)) {
+          _topHeaderClose();
       }
     });
 
