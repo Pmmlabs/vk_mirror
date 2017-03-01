@@ -9755,13 +9755,10 @@ function langWordNumeric(num, words, arr) {
 function getDateText(time, offset) {
   var timeText = '';
   time = time + offset;
-  var diff = parseInt(Date.now()/1000) - time;
+  var diff = parseInt(Date.now() / 1000) - time;
 
-  if (diff < 5) {
+  if (diff < 60) {
     timeText = getLang('global_just_now');
-  } else if (diff < 60) {
-    var secs = diff;
-    timeText = langWordNumeric(secs, getLang('global_word_secs_ago', 'raw'), getLang('global_secs_ago', 'raw'));
   } else if (diff < 3600) {
     var mins = intval(diff / 60);
     timeText = langWordNumeric(mins, getLang('global_word_mins_ago', 'raw'), getLang('global_mins_ago', 'raw'));
