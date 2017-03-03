@@ -3932,6 +3932,10 @@ var Wall = {
     var reply = (opts || {}).reply,
         extraClass = (opts || {}).className || '',
         toRight = (reply && !(reply % 2)) && getXY(el)[0] > 420;
+    tooltipOpts = tooltipOpts || {};
+    if (!reply) {
+      tooltipOpts.appendEl = bodyNode;
+    }
     showTooltip(el, extend({
       url: 'al_wall.php',
       params: extend({act: 'post_tt', post: post}, opts || {}),
@@ -3943,7 +3947,7 @@ var Wall = {
       dir: 'auto',
       className: 'rich wall_tt' + extraClass,
       typeClass: (toRight ? 'tt_default_right' : 'tt_default')
-    }, tooltipOpts || {}));
+    }, tooltipOpts));
   },
 
   adsMarkTooltip: function(el) {
