@@ -1373,7 +1373,7 @@ if (!VK.Widgets) {
             scrolling: 'no',
             allowTransparency: true,
             id: buttonIfr.id + '_tt',
-            style: {position: 'absolute', padding: 0, display: 'block', opacity: 0.01, filter: 'alpha(opacity=1)', border: '0', width: '274px', height: '130px', zIndex: 5000, overflow: 'hidden'}
+            style: {position: 'absolute', padding: 0, display: 'none', opacity: 0.01, filter: 'alpha(opacity=1)', border: '0', width: '274px', height: '130px', zIndex: 5000, overflow: 'hidden'}
           });
           tooltipIfr.setAttribute('vkhidden', 'yes');
 
