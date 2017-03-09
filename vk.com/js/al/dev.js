@@ -1302,9 +1302,9 @@ showColorBox: function(obj, num, ev) {
   }
   var posY = (getXY(obj)[1] - getXY(wrap)[1]);
   if (cur.colorInited) {
-    animate(cont, {marginTop: -180 + posY}, 200)
+    animate(cont, {marginTop: -179 + posY}, 200)
   } else {
-    setStyle(cont, {marginTop: -180 + posY})
+    setStyle(cont, {marginTop: -179 + posY})
     var palSize = getSize(palette);
     var pal = palette.getContext('2d');
     var gradient = pal.createLinearGradient(palSize[0]/2,palSize[1],palSize[0]/2,0);
