@@ -2025,7 +2025,7 @@ var Wall = {
     }
 
     var more = ge('wall_more_link');
-    ajax.post('al_wall.php', {act: 's', search: 1, q: query, owner_id: cur.oid, offset: offset, inline: 1}, {
+    ajax.post('al_wall.php', {act: 's', search: 1, q: query, owner_id: cur.oid, offset: offset, inline: 1, owners_only: 1}, {
       onDone: function (rows, newOffset, count) {
         if (cur_oid !== cur.oid) return;
         if (cur.wallTab != 'search') return;
