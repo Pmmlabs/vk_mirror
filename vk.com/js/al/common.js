@@ -8039,7 +8039,9 @@ function animateCount(el, newCount, opts) {
     wrapEl.appendChild(constEl2 = ce('div', {className: 'counter_const inl_bl', innerHTML: constEndPart}));
   }
 
-  setStyle(wrapEl, {width: (constEl1 && getSize(constEl1)[0] || 0) + (constEl2 && getSize(constEl2)[0] || 0) + bigW + 0})
+  if (!opts.noWrapWidth) {
+    setStyle(wrapEl, {width: (constEl1 && getSize(constEl1)[0] || 0) + (constEl2 && getSize(constEl2)[0] || 0) + bigW + 0})
+  }
 
   if (browser.csstransitions === undefined) {
     var b = browser, bv = floatval(b.version);
