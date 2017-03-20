@@ -1320,7 +1320,7 @@ var Page = {
 
       var curPlayer = cur.videoInlinePlayer;
       if (curPlayer) {
-        var isAutoplaying = curPlayer.isFromAutoplay() && !curPlayer.isTouchedByUser();
+        var isAutoplaying = curPlayer.isAutoplay();
         var isPromoPost = domData(domClosest('post', curPlayer.el), 'ad-view');
         var rect = curPlayer.el.getBoundingClientRect();
         var inViewport = rect.top > activeTop && rect.bottom < activeBottom;
@@ -1405,7 +1405,8 @@ var Page = {
         post_id: domData(domClosest('post', thumb), 'post-id'),
         expand_on_click: domData(thumb, 'expand_on_click'),
         autoplay: 1,
-        from_autoplay: 1
+        from_autoplay: 1,
+        module: currentModule()
       };
     }
 
