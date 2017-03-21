@@ -1316,7 +1316,7 @@ var Page = {
       var viewportMiddle = fixedHeaderHeight + viewportHeight / 2;
       var activeSpace = Math.min(viewportHeight, 800);
       var activeTop = scrollGetY() < 300 ? fixedHeaderHeight : (viewportMiddle - activeSpace/2);
-      var activeBottom = viewportMiddle + activeSpace/2;
+      var activeBottom = activeTop + activeSpace;
 
       var curPlayer = cur.videoInlinePlayer;
       if (curPlayer) {

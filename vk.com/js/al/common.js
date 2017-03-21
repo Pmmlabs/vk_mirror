@@ -7648,7 +7648,7 @@ function showInlineVideo(videoId, listId, options, ev, thumb) {
   }
   function onFail(text) {
     if (params.from_autoplay) return;
-    setTimeout(showFastBox(getLang('global_error'), text).hide, 2000);
+    showFastBox(getLang('global_error'), text || getLang('global_error_occured'));
   }
   function showProgress() {
     thumb.setAttribute('data-loading', 1);
