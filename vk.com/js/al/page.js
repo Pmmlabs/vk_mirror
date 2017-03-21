@@ -28,7 +28,7 @@ var Page = {
       } else {
         addMedia.clipboardImageUploadIndex = Upload.init(domFC(uploadEl), uploadData.url, uploadData.params, {
           file_name: 'photo',
-          file_size_limit: 1024 * 1024 * 5, // 5Mb
+          file_size_limit: 1024 * 1024 * 25, // 25Mb
           file_types_description: 'Image files (*.jpg, *.jpeg, *.png, *.gif)',
           file_types: '*.jpg;*.JPG;*.jpeg;*.JPEG;*.png;*.PNG;*.gif;*.GIF',
           file_input: null,
@@ -567,6 +567,7 @@ var Page = {
       case 'public': return 'c';
       case 'groups': return 'c';
       case 'profile': return 'p';
+      case 'wall': return 'w';
       case 'feed_search': return 's';
       case 'feed_news_recent': return 'r';
       case 'feed_news': return 'r';
@@ -6080,9 +6081,9 @@ WallUpload = {
     });
   },
   uploadFailed: function(info, code) {
-    var i = info.ind !== undefined ? info.ind : info,
+    var i = info.ind !== undefined ? info.ind : info, options = Upload.options[i],
         fileName = (info.fileName ? info.fileName : info).replace(/[&<>"']/g, '');
-    if (Upload.types[i] == 'fileApi' && !Upload.options[i].wiki_editor) {
+    if (Upload.types[i] == 'fileApi' && !options.wiki_editor) {
       var lnkId, ind = info.fileName ? i+'_'+info.fileName : info;
       if (cur.imMedia) {
         re('upload'+ind+'_progress_wrap');
@@ -6092,6 +6093,9 @@ WallUpload = {
         re('upload'+ind+'_progress_wrap');
         lnkId = (cur.attachMediaIndexes || {})[fileName];
         if (lnkId) cur.addMedia[lnkId].unchooseMedia();
+      }
+      if (options.filesTotalCount == 1) {
+        setTimeout(showFastBox({title: getLang('global_error')}, getLang('wall_add_photo_error')).hide, 2000);
       }
     }
     // hide(box.progress);
@@ -6184,7 +6188,7 @@ WallUpload = {
 
     cur.wallUploadInd = Upload.init('post_field_upload', data.url, data.params, {
       file_name: 'photo',
-      file_size_limit: 1024 * 1024 * 5, // 5Mb
+      file_size_limit: 1024 * 1024 * 25, // 25Mb
       file_types_description: 'Image files (*.jpg, *.jpeg, *.png, *.gif)',
       file_types: '*.jpg;*.JPG;*.jpeg;*.JPEG;*.png;*.PNG;*.gif;*.GIF',
       file_input: null,
