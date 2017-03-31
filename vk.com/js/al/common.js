@@ -2128,7 +2128,8 @@ var layers = {
     if (cur.pvShown && cur.pvListId != 'temp') {
       clayer = ['photo', cur.pvData[cur.pvListId][cur.pvIndex].id, cur.pvListId, {onHide: cur.pvOptions.onHide, scroll: cur.pvNarrowScrollbar ? cur.pvNarrowScrollbar.data.scrollTop : 0, onShow: onShow, noHistory: !!cur.pvNoHistory, histLen: cur.pvHistoryLength}];
     } else if (window.mvcur && mvcur.mvShown && !mvcur.minimized) {
-      var opts = {scroll: mvLayerWrap.scrollTop, noHistory: !!mvcur.noHistory, nomin: true, prevLoc: mvcur.mvPrevLoc };
+      var autostart = mvcur.options && (mvcur.options.autoplay || mvcur.options.focusPlay);
+      var opts = {scroll: mvLayerWrap.scrollTop, noHistory: !!mvcur.noHistory, nomin: 1, autoplay: autostart, prevLoc: mvcur.mvPrevLoc};
       if (VideoPlaylist.getCurListId()) {
         opts = extend(opts, {
           playlistId: VideoPlaylist.getCurListId(),
