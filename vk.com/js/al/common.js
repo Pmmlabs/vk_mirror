@@ -1658,7 +1658,6 @@ function getColor(elem, attr) {
 }
 
 function scrollToY(y, speed, anim, noCorrect) {
-  if (hasClass(bodyNode, 'april1')) return;
   if (speed == undefined) speed = 400;
 
   var isTouchDevice = ('ontouchstart' in document.documentElement);
@@ -2879,31 +2878,6 @@ function _stlMouseover(e) {
   toggleClass(_stlSide, 'over', over);
 }
 
-function checkAprilLayer() {
-  var oldEl = ge('old_vk_wrap');
-  if (!hasClass(bodyNode, 'april1')) {
-    re(oldEl);
-    return;
-  }
-
-  if (oldEl) return;
-
-  oldEl = se('<div class="april1_old_vk" id="old_vk_wrap"></div>');
-  bodyNode.appendChild(oldEl);
-  cur.disableAutoMore = true;
-  addEvent(oldEl, 'keydown click mousedown', function() {
-    removeClass(bodyNode, 'april1');
-    cur.disableAutoMore = false;
-    addClass(oldEl, 'fade');
-    setTimeout(re.pbind(oldEl), 1000);
-    onBodyResize();
-    window.FastChat && FastChat.checkChatHeight();
-    if (window.Chat && Chat.scrollNode) {
-      Chat.scrollNode.scrollTop = 0;
-    }
-  });
-}
-
 vk.width = 960;
 function domStarted() {
   window.headNode = geByTag1('head');
@@ -2929,7 +2903,6 @@ function domStarted() {
   });
   uaStr = uaStr.join(' ');
   bodyNode.setAttribute('data-useragent', uaStr);
-  checkAprilLayer();
 
   for (var i in StaticFiles) {
     var f = StaticFiles[i];
@@ -4493,7 +4466,6 @@ function handlePageParams(params) {
   vk.id = params.id;
   if (params.body_class !== bodyNode.className) {
     bodyNode.className = params.body_class || '';
-    checkAprilLayer();
   }
   updateSTL();
   updateLeftMenu();
@@ -4860,7 +4832,6 @@ var nav = {
             if (h.bodyClass !== bodyNode.className) {
               bodyNode.className = h.bodyClass || '';
               vk.body_class = h.bodyClass || '';
-              checkAprilLayer();
             }
             setStyle(tNode.parentNode, 'display', h.hideHeader ? 'none' : 'block');
             if (cur._back.show) {
