@@ -4386,7 +4386,7 @@ var Wall = {
     ).toString());
     if (sel) return;
 
-    ajax.post('al_wall.php', {act: 'copy_history', post: post, offset: offset}, {onDone: function(rows) {
+    ajax.post('al_wall.php', {act: 'copy_history', post: post, offset: offset, from: cur.module}, {onDone: function(rows) {
       if (!domPN(el)) return;
 
       hide(el);

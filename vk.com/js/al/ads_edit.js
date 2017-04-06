@@ -96,6 +96,10 @@ AdsEdit.unescapeValue = function(value) {
   return replaceEntities(value.replace(/&/g, '&amp;'));
 }
 
+AdsEdit.invertCheckboxValue = function(value) {
+  return value ? 0 : 1;
+}
+
 AdsEdit.getTextWidth = function(text) {
   var elem = ce('span', {innerHTML: text});
   document.body.appendChild(elem);
@@ -1544,6 +1548,7 @@ AdsViewEditor.prototype.init = function(options, editor, targetingEditor, params
     video_hash:                 {value: '', value_old: ''},
     cost_per_click:             {value: '', edited: false, last_value: ''},
     platform:                   {value: 0, data: [], data_all: [], values_normal: 0, values_disabled: 0},
+    platform_no_wall:           {value: 0},
     view_retargeting_group_id:  {value: 0, data: []},
     views_limit_flag:           {value: 0},
     views_limit_exact:          {value: 0, data: [], default_values: [], data_ranges: []},
@@ -1760,6 +1765,13 @@ AdsViewEditor.prototype.initHelpParam = function(paramNameHelp) {
     case 'platform':
       targetElem = ge(this.options.targetIdPrefix + paramNameHelp).parentNode;
       helpText = function() { return inArray(this.params.link_type.value, AdsEdit.ADS_AD_LINK_TYPES_ALL_POST) ? cur.adParamsHelp['platform_post'] : cur.adParamsHelp['platform']; }.bind(this);
+      var showTooltip = function() { AdsEdit.showHelpCriterionTooltip(paramNameHelp, targetElem, handler, this.help[paramNameHelp], helpText, shiftLeft, shiftTop, this.cur); }.bind(this);
+      var hideTooltip = function() { AdsEdit.hideHelpTooltip(this.help[paramNameHelp].tt); }.bind(this);
+      handler = function(event){ AdsEdit.onHelpTooltipEvent(event, paramNameHelp, context, showTooltip, hideTooltip); }.bind(this);
+      AdsEdit.initHelpTooltipTarget(targetElem, handler, this.cur);
+      break;
+    case 'platform_no_wall':
+      targetElem = ge(this.options.targetIdPrefix + paramNameHelp).parentNode;
       var showTooltip = function() { AdsEdit.showHelpCriterionTooltip(paramNameHelp, targetElem, handler, this.help[paramNameHelp], helpText, shiftLeft, shiftTop, this.cur); }.bind(this);
       var hideTooltip = function() { AdsEdit.hideHelpTooltip(this.help[paramNameHelp].tt); }.bind(this);
       handler = function(event){ AdsEdit.onHelpTooltipEvent(event, paramNameHelp, context, showTooltip, hideTooltip); }.bind(this);
@@ -2057,6 +2069,16 @@ AdsViewEditor.prototype.initUiParam = function(paramName) {
         onChange:     function(value) { this.onUiChange(paramName, value); }.bind(this)
       });
       this.params[paramName].ui.disable(this.params[paramName].disabled);
+      this.cur.destroy.push(function(){ this.params[paramName].ui.destroy(); }.bind(this));
+      break;
+    case 'platform_no_wall': // Be careful: value is inverted
+      targetElem = ge(this.options.targetIdPrefix + paramName);
+      this.params[paramName].ui = new Checkbox(targetElem, {
+        label:    this.params[paramName].label_checkbox,
+        checked:  AdsEdit.invertCheckboxValue(this.params[paramName].value),
+        width:    this.options.uiWidth,
+        onChange: function(state) { this.onUiChange(paramName, AdsEdit.invertCheckboxValue(state)); }.bind(this)
+      });
       this.cur.destroy.push(function(){ this.params[paramName].ui.destroy(); }.bind(this));
       break;
     case 'view_retargeting_group_id':
@@ -2667,8 +2689,8 @@ AdsViewEditor.prototype.updateUiParamVisibility = function(paramName) {
       this.initUiParam(paramName);
       toggleClass('ads_edit_ad_row_' + paramName, 'unshown', !!this.params[paramName].hidden);
       break;
-    case '_additional':
-      toggleClass('ads_edit_ad_row_additional', 'unshown', !!(this.params.disclaimer_medical.hidden && this.params.disclaimer_specialist.hidden && this.params.disclaimer_supplements.hidden));
+    case '_view_additional':
+      toggleClass('ads_edit_ad_row_view_additional', 'unshown', !!(this.params.disclaimer_medical.hidden && this.params.disclaimer_specialist.hidden && this.params.disclaimer_supplements.hidden));
       break;
     case 'disclaimer_medical':
     case 'disclaimer_specialist':
@@ -2693,6 +2715,10 @@ AdsViewEditor.prototype.updateUiParamVisibility = function(paramName) {
       toggleClass('ads_edit_ad_row_' + paramName, 'unshown', !!this.params[paramName].hidden);
       break;
     case 'platform':
+      this.initUiParam(paramName);
+      toggleClass('ads_edit_ad_row_' + paramName, 'unshown', !!this.params[paramName].hidden);
+      break;
+    case 'platform_no_wall':
       this.initUiParam(paramName);
       toggleClass('ads_edit_ad_row_' + paramName, 'unshown', !!this.params[paramName].hidden);
       break;
@@ -2913,17 +2939,18 @@ AdsViewEditor.prototype.onParamUpdate = function(paramName, paramValue, forceDat
         this.updateUiParamData('views_limit_exact');
         this.updateUiParam('views_limit_exact');
         this.updateUiParamVisibility('_format_type');
-        this.updateUiParamVisibility('cost_type');
         this.updateUiParamVisibility('title');
         this.updateUiParamVisibility('_title');
         this.updateUiParamVisibility('description');
-        this.updateUiParamVisibility('_additional');
+        this.updateUiParamVisibility('_view_additional');
         this.updateUiParamVisibility('disclaimer_medical');
         this.updateUiParamVisibility('disclaimer_specialist');
         this.updateUiParamVisibility('disclaimer_supplements');
         this.updateUiParamVisibility('age_restriction');
         this.updateUiParamVisibility('stats_url');
         this.updateUiParamVisibility('view_retargeting_group_id');
+        this.updateUiParamVisibility('cost_type');
+        this.updateUiParamVisibility('platform_no_wall');
         this.updateUiParamVisibility('views_limit_flag');
         this.updateUiParamVisibility('views_limit_exact');
         this.updatePreview('layout');
@@ -2979,6 +3006,7 @@ AdsViewEditor.prototype.onParamUpdate = function(paramName, paramValue, forceDat
           this.params.link_domain_confirm.value   = 0;
         }
         this.params.platform.hidden = !!(!inArray(this.params.link_type.value, AdsEdit.ADS_AD_LINK_TYPES_ALL_POST) && (!this.params.platform.allow_web || !inArray(this.params.link_type.value, [AdsEdit.ADS_AD_LINK_TYPE_GROUP, AdsEdit.ADS_AD_LINK_TYPE_EVENT, AdsEdit.ADS_AD_LINK_TYPE_PUBLIC, AdsEdit.ADS_AD_LINK_TYPE_APP, AdsEdit.ADS_AD_LINK_TYPE_URL])));
+        this.params.platform_no_wall.hidden = !!(!inArray(this.params.link_type.value, AdsEdit.ADS_AD_LINK_TYPES_ALL_POST) || !this.params.platform_no_wall.allow);
 
         this.updateUiParam('link_id');
         this.updateUiParam('link_url');
@@ -3227,6 +3255,9 @@ AdsViewEditor.prototype.onParamUpdate = function(paramName, paramValue, forceDat
         var linkTypeForPlatformNormal = (this.params.platform.values_normal[linkTypeForPlatform] ? linkTypeForPlatform : 0);
         this.params.platform.values_normal[linkTypeForPlatformNormal] = this.params.platform.value;
 
+        isUpdateNeeded = true;
+        break;
+      case 'platform_no_wall':
         isUpdateNeeded = true;
         break;
       case 'campaign_type':
@@ -4169,6 +4200,7 @@ AdsViewEditor.prototype.completeLink = function() {
     this.updateUiParamVisibility('format_type');
     this.updateUiParamVisibility('description');
     this.updateUiParamVisibility('platform');
+    this.updateUiParamVisibility('platform_no_wall');
   }
 
   if (this.params.link_type.value == AdsEdit.ADS_AD_LINK_TYPE_APP && this.params.link_id.app_game_links_ids[this.params.link_id.value]
