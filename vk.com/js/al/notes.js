@@ -594,7 +594,7 @@ cur.lang.notes_livejournal_delete + '</div></div>' : '';
     ge('privacy_notecomm').value = Privacy.getValue('notecomm' + mid);
     var form = ge('editPost');
     var act = (mid != '') ? 'update' : 'add';
-    var exportStatus = (mid != '') ? '' : isChecked(ge('status_export'));
+    var exportStatus = (mid != '') ? '' : isChecked('status_export');
     var formWysiwyg = form.wysiwyg ? form.wysiwyg.value : '';
     ajax.post('/notes', {act: act, hash: form.hash.value, title: form.title.value, wysiwyg: formWysiwyg, nid: mid,
                                 status_export: exportStatus, privacy_note: form.privacy_note.value, privacy_notecomm: form.privacy_notecomm.value,
@@ -632,7 +632,7 @@ cur.lang.notes_livejournal_delete + '</div></div>' : '';
   },
 
   switchExport: function() {
-    isChecked(ge('status_export')) ?  hide('note_privacy') : show('note_privacy');
+    isChecked('status_export') ?  hide('note_privacy') : show('note_privacy');
   },
 
   setPhotos: function(offset) {
