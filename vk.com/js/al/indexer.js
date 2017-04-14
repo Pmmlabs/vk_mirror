@@ -10,7 +10,7 @@ function vkIndexer(list, prepareFunc, callback) {
   setTimeout(this.indexIteration.bind(this), 10);
 }
 
-vkIndexer.prototype.delimiter = vkIndexer.delimiter = new RegExp('[\\s\\-\\.,\\"\\\'\\«\\(\\)\\[\\]\\{\\}\\+\\?\\\\]+', 'g');
+vkIndexer.prototype.delimiter = vkIndexer.delimiter = new RegExp('[\\s\\-\\.,\\"\\\'\\«\\(\\)\\[\\]\\{\\}\\#\\+\\?\\\\]+', 'g');
 vkIndexer.prototype.trimmer = new RegExp('^[\\s\\-\\.,\\"\\\'\\«\\(\\)\\[\\]\\{\\}\\+\\?\\\\]+|[\\s\\-,\\"\\\'\\«\\(\\)\\[\\]\\{\\}\\\\]+$', 'g');
 
 vkIndexer.prototype.toTranslit = {1072:"a",1073:"b",1074:"v",1075:"g",1076:"d",1077:"e",1078:"zh",
