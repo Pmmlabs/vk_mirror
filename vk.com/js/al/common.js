@@ -10687,6 +10687,11 @@ function getStatusExportHash() {
   var IDLED = '_longViewIdled';
   var MODULE = '_longViewModule';
   var STARTED = '_longViewStarted';
+  var PROCESSED = '_longViewProcessed';
+  var CACHED = '_longViewCached';
+  var HEIGHT = '_longViewHeight';
+  var TOP = '_longViewTop';
+  var BOTTOM = '_longViewBottom';
 
   // Long view types
   var TYPE_REGULAR = 'REGULAR';
@@ -10697,30 +10702,50 @@ function getStatusExportHash() {
   var LS_IDLED = 'LongView.idled';
 
   // Local vars
+  var testGroup = vk.longViewTestGroup; // "every_view" || "page_view" || null
   var tracking = [];
   var started = [];
   var viewedData = [];
   var tabTimestamp = Date.now();
+  var blindTop = 0;
+  var blindBottom = 0;
+  var isScrolling = false;
   var timerSaveViewed = null;
   var timerSendViewed = null;
   var timerSaveIdled = null;
   var timerSendIdled = null;
+  var viewIndexes = {}; // postId => Number
+
+  initLongView();
 
   function initLongView() {
-    if (vk.isLongViewEnabled) {
+    if (testGroup) {
       addEvent(window, 'blur', onWindowBlur);
       addEvent(window, 'focus', onWindowFocus);
       onDomReady(function() { setTimeout(onStartup, 500) });
 
       window.LongView = {
-        onRegister: onRegister,
-        onScroll: onScroll,
+        register: register,
+        onScroll: throttle(onScroll, 50),
         onBeforePageChange: onBeforePageChange,
-        debug: function() { return { started: started, viewedData: viewedData } }
+
+        // Should be manually executed when page size changes
+        clearElemsCache: clearElemsCache,
+
+        _debug: function() {
+          return {
+            started: started,
+            tracking: tracking,
+            viewedData: viewedData,
+            viewIndexes: viewIndexes,
+            blindTop: blindTop,
+            blindBottom: blindBottom
+          };
+        }
       };
     } else {
       window.LongView = {
-        onRegister: function() {},
+        register: function() {},
         onScroll: function() {},
         onBeforePageChange: function() {}
       };
@@ -10736,7 +10761,18 @@ function getStatusExportHash() {
     }
   }
 
-  function onRegister(elem, module) {
+  function clearElemsCache() {
+    tracking.forEach(function(elem) {
+      elem[CACHED] = false;
+    });
+  }
+
+  function register(elem, module) {
+    // Enable LongView only for `/im` pages
+    if (module !== 'im') {
+      return;
+    }
+
     if (!elem[TYPE] && isPostValid(elem)) {
       elem[TYPE] = getPostType(elem);
       elem[MODULE] = module;
@@ -10744,10 +10780,26 @@ function getStatusExportHash() {
     }
   }
 
-  function onScroll(scrollY, winHeight) {
+  function onScroll(_scrollY, _winHeight) {
+    var self = onScroll;
+    var scrollY = _scrollY || scrollGetY();
+    var winHeight = _winHeight || window.innerHeight;
     processTracking(scrollY, winHeight);
+
+    if (isScrolling) {
+      clearTimeout(self.timer);
+      self.timer = setTimeout(onScrollStop, 150);
+    } else {
+      isScrolling = true;
+      stopTimers();
+      actualizeBlindHeights();
+    }
+  }
+
+  function onScrollStop() {
     stopTimers();
     startTimers();
+    isScrolling = false;
   }
 
   function onWindowBlur() {
@@ -10773,8 +10825,11 @@ function getStatusExportHash() {
   }
 
   function processTracking(scrollY, winHeight) {
+    var stopTrackElems = [];
+
     tracking.forEach(function(elem) {
-      if (!document.body.contains(elem)) {
+      if (isProcessedOrDestroyed(elem)) {
+        stopTrackElems.push(elem);
         return;
       }
 
@@ -10785,12 +10840,16 @@ function getStatusExportHash() {
         if (elem[IDLED]) {
           delete elem[IDLED];
         } else {
-          removeFromArray(started, elem);
+          arrayRemove(started, elem);
           viewedData = viewedData.concat(elemToData(elem));
         }
 
         delete elem[STARTED];
       }
+    });
+
+    stopTrackElems.forEach(function(elem) {
+      arrayRemove(tracking, elem);
     });
   }
 
@@ -10836,7 +10895,7 @@ function getStatusExportHash() {
 
   function saveIdled() {
     if (started.length) {
-      lsSetIdled(elemsToData(started));
+      lsSetIdled(elemsToData(started, true));
       timerSaveIdled = setTimeout(saveIdled, INTERVAL_IDLE);
     }
   }
@@ -10873,6 +10932,11 @@ function getStatusExportHash() {
   }
 
   function isPostValid(elem) {
+    // Repost in message
+    if (hasClass(elem, 'im-mess--post')) {
+      return true;
+    }
+
     var child = elem && domFC(elem);
     return (
       !child || // empty element
@@ -10946,25 +11010,41 @@ function getStatusExportHash() {
     return timestamp !== tabTimestamp && Date.now() - timestamp >= OLD_DATA_AGE;
   }
 
+  function actualizeBlindHeights() {
+    if (location.pathname === '/im') {
+      var chatHeader = geByClass1('im-page--chat-header');
+      var chatInput = geByClass1('im-page--chat-input');
+      blindTop = chatHeader.getBoundingClientRect().top + chatHeader.offsetHeight;
+      blindBottom = window.innerHeight - chatInput.getBoundingClientRect().top;
+    } else {
+      blindTop = ge('page_header').offsetHeight;
+      blindBottom = 0;
+    }
+  }
+
   function isViewable(elem, percent, scrollY, winHeight) {
     if (!elem) {
       return false;
     }
 
-    var self = isViewable;
-    var headerHeight = self.headerHeight || (self.headerHeight = ge('page_header').offsetHeight);
-    var screenHeight = winHeight - headerHeight;
-    var viewTop = scrollY + headerHeight;
-    var viewBottom = scrollY + winHeight;
-    var elemHeight = elem.offsetHeight;
-    var elemRect = elem.getBoundingClientRect();
-    var elemTop = scrollY + elemRect.top;
-    var elemBottom = elemTop + elemHeight;
+    if (!elem[CACHED]) {
+      elem[CACHED] = true;
+      elem[HEIGHT] = elem.offsetHeight;
+      elem[TOP] = scrollY + elem.getBoundingClientRect().top;
+      elem[BOTTOM] = elem[TOP] + elem[HEIGHT];
+    }
+
+    var viewHeight = winHeight - blindTop - blindBottom;
+    var viewTop = scrollY + blindTop;
+    var viewBottom = scrollY + winHeight - blindBottom;
+    var elemHeight = elem[HEIGHT];
+    var elemTop = elem[TOP];
+    var elemBottom = elem[BOTTOM];
     var elemViewHeight = elemBottom > viewTop && elemTop < viewBottom ?
       Math.min(viewBottom, elemBottom) - Math.max(viewTop, elemTop) :
       0;
 
-    return elemViewHeight >= Math.min(screenHeight * percent, elemHeight * percent);
+    return elemViewHeight >= Math.min(viewHeight * percent, elemHeight * percent);
   }
 
   function dataToString(data) {
@@ -10977,10 +11057,11 @@ function getStatusExportHash() {
       dataByOwner[ownerId] || (dataByOwner[ownerId] = []);
 
       dataByOwner[ownerId].push(
-        // <module><postId>[:<duration>:<index>]:<sessionId>[:<q>]
+        // <module><postId>[:<duration>:<index>][:<sessionId>][:<q>]:viewIndex
         d.module + d.postId + params +
         (d.sessionId ? ':' + d.sessionId : '') +
-        (d.q ? ':' + d.q : '')
+        (d.q ? ':' + d.q : '') +
+        (':' + d.viewIndex)
       );
     });
 
@@ -10991,20 +11072,18 @@ function getStatusExportHash() {
     return dataStrings.join(';');
   }
 
-  function elemsToData(elems) {
+  function elemsToData(elems, noViewIndexIncrement) {
     var data = [];
-    var elemsCount = elems.length;
-    var i;
 
-    for (i = 0; i < elemsCount; i++) {
-      data = data.concat(elemToData(elems[i]));
-    }
+    elems.forEach(function(elem) {
+      data = data.concat(elemToData(elem, noViewIndexIncrement));
+    });
 
     return data;
   }
 
-  function elemToData(elem) {
-    if (!document.body.contains(elem)) {
+  function elemToData(elem, noViewIndexIncrement) {
+    if (isProcessedOrDestroyed(elem)) {
       return [];
     }
 
@@ -11018,6 +11097,7 @@ function getStatusExportHash() {
       return [];
     }
 
+    elem[PROCESSED] = true;
     var raws = getPostRaws(elem);
     var sectionLetter = getSectionLetter(raws.module);
     var sessionId = cur.feed_session_id || 'na';
@@ -11047,12 +11127,19 @@ function getStatusExportHash() {
         postId = keyParts[2];
       }
 
+      if (!noViewIndexIncrement) {
+        var fullPostId = ownerId + '_' + postId;
+        viewIndexes[fullPostId] || (viewIndexes[fullPostId] = 0);
+        viewIndexes[fullPostId]++;
+      }
+
       data.push(
         // Regular ad
         ownerId === 'ad' ? {
           ownerId: 'ad',
           postId: postId,
-          module: sectionLetter
+          module: sectionLetter,
+          viewIndex: viewIndexes[fullPostId]
         } :
 
         // Special block "recommended applications"
@@ -11062,7 +11149,8 @@ function getStatusExportHash() {
           module: sectionLetter,
           index: raws.index,
           duration: duration,
-          sessionId: sessionId
+          sessionId: sessionId,
+          viewIndex: viewIndexes[fullPostId]
         } :
 
         // Regular post
@@ -11073,7 +11161,8 @@ function getStatusExportHash() {
           index: raws.index,
           duration: duration,
           sessionId: sessionId,
-          q: raws.q || null
+          q: raws.q || null,
+          viewIndex: viewIndexes[fullPostId]
         }
       );
     }
@@ -11092,8 +11181,20 @@ function getStatusExportHash() {
    * }
    */
   function getPostRaws(elem) {
+    var module = elem[MODULE];
+
+    if (module === 'im') {
+      var postId = attr(elem, 'data-post-id');
+      var copyId = attr(elem, 'data-copy');
+      var result = { index: -1, module: 'im' };
+      postId && (result[postId] = -1);
+      copyId && (result[copyId] = -1);
+
+      return result;
+    }
+
     try {
-      return window[elem[MODULE]].postsGetRaws(elem);
+      return window[module].postsGetRaws(elem);
     } catch (err) {
       console.error('Unable to extract data from elem', elem);
       return [];
@@ -11108,6 +11209,7 @@ function getStatusExportHash() {
       public: 'c',
       groups: 'c',
       profile: 'p',
+      im: 'm',
       feed_search: 's',
       feed_news_recent: 'r',
       feed_news: 'r',
@@ -11124,15 +11226,17 @@ function getStatusExportHash() {
     }[section] || 'u';
   }
 
-  function removeFromArray(array, item) {
+  function isProcessedOrDestroyed(elem) {
+    return (testGroup === 'page_view' && elem[PROCESSED]) || !document.body.contains(elem);
+  }
+
+  function arrayRemove(array, item) {
     var index = array.indexOf(item);
 
     if (index >= 0) {
       array.splice(index, 1);
     }
   }
-
-  initLongView();
 })();
 
 try{stManager.done('common.js');}catch(e){}
