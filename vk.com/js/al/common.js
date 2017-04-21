@@ -10747,7 +10747,8 @@ function getStatusExportHash() {
       window.LongView = {
         register: function() {},
         onScroll: function() {},
-        onBeforePageChange: function() {}
+        onBeforePageChange: function() {},
+        clearElemsCache: function() {}
       };
     }
   }
