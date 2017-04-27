@@ -2901,7 +2901,7 @@ showMyStickers: function() {
 },
 
 showStickersStore: function(optId, from) {
-  var peer = Emoji.selectPeer(optId),
+  var peer = Emoji.selectPeer(optId !== false ? optId : undefined),
       params = {act: 'stickers_store', peer: peer, box: 1};
   if (from) params.from = from;
   cur.boxStickersStore = showBox('al_im.php', params, {dark: 1, stat: ['im.css', 'imn.js', 'page_help.css', 'sorter.js']});
