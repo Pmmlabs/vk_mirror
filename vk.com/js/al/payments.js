@@ -693,8 +693,6 @@ var MoneyTransfer = {
     if (btn) {
       var tbl = ge('settings_transfer_history').tBodies[0];
       cur.userAutoScroll = new AutoList(tbl, {
-        scrollNode: 'payments_money_transfer_history_box',
-        contentNode: 'settings_transfer_history',
         onNoMore: re.pbind(btn),
         onNeedRows: function(cb, offset) {
           ajax.post('al_payments.php', { act: 'money_transfer_history_box', offset: offset, owner_id: oid }, {
