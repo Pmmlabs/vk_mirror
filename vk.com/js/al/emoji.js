@@ -63,6 +63,16 @@ init: function(txt, opts) {
       }
     });
 
+    if (opts.noLineBreaks) {
+      addEvent(txt, 'blur', function(e) {
+        if ((txt.textContent || txt.innerText) == '') {
+          each(geByTag('br', txt), function(k, br) {
+            txt.removeChild(br);
+          })
+        }
+      });
+    }
+
     addEvent(txt, 'keypress keydown keyup paste', function(e) {
       if (e.canceled) return false;
       if (e.type == 'keydown') {
@@ -166,9 +176,10 @@ init: function(txt, opts) {
         }
         Emoji.checkStickersKeywords(optId, opts);
       } else if (e.type == 'keyup') {
-        if (opts.noLineBreaks) {
-          var fc = domFC(txt);
-          fc && fc.tagName == 'BR' && txt.removeChild(fc);
+        if (opts.noLineBreaks && (txt.textContent || txt.innerText) == '') {
+          each(geByTag('br', txt), function(k, br) {
+            txt.removeChild(br);
+          })
         }
         if (opts.checkEditable) {
           opts.checkEditable(optId, txt);
