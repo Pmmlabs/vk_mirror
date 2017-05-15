@@ -40,6 +40,10 @@ var mobPlatforms = {1:1,2:1,3:1,4:1,5:1};
 
 if (!window.vk) window.vk = {loginscheme: 'http', ip_h: ''};
 
+function jsc(name) {
+  return 'cmodules/' + name;
+}
+
 (function() {
   var flash = [0, 0, 0], axon = 'ShockwaveFlash.ShockwaveFlash';
   var wrapType = 'embed', wrapParam = 'type="application/x-shockwave-flash" ';
@@ -1037,6 +1041,8 @@ window.stManager = {
       var p = '/js/';
       if (stTypes.fromLib[f]) {
         p += 'lib/';
+      } else if (stTypes.fromCompiled && stTypes.fromCompiled[f]) {
+        p += jsc('web/');
       } else if (!/^lang\d/i.test(f) && !stTypes.fromRoot[f] && f.indexOf('/') == -1) {
         p += 'al/';
       }
@@ -6352,8 +6358,6 @@ function parallel() {
     })
   })
 }
-
-function showAudioPlaylist() {}
 
 function shareAudioPlaylist(event, playlistOwnerId, playlistId, accessHash) {
   showBox('like.php', {
