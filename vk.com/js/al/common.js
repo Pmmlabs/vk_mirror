@@ -5728,6 +5728,19 @@ function elfocus(el, from, to) {
   } catch(e) {}
 }
 
+function traverseParent(el, cb) {
+  el = ge(el)
+
+  while (el && !cb(el)) {
+    el = domPN(el)
+    if (el == document) {
+      break
+    }
+  }
+
+  return null
+}
+
 // Message box
 var _message_box_guid = 0, _message_boxes = [], _show_flash_timeout = 0;
 
