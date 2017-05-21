@@ -65,9 +65,9 @@ init: function(txt, opts) {
 
     if (opts.noLineBreaks) {
       addEvent(txt, 'blur', function(e) {
-        if ((txt.textContent || txt.innerText) == '') {
+        if (!txt.textContent && !txt.innerText) {
           each(geByTag('br', txt), function(k, br) {
-            txt.removeChild(br);
+            re(br);
           })
         }
       });
@@ -176,9 +176,9 @@ init: function(txt, opts) {
         }
         Emoji.checkStickersKeywords(optId, opts);
       } else if (e.type == 'keyup') {
-        if (opts.noLineBreaks && (txt.textContent || txt.innerText) == '') {
+        if (opts.noLineBreaks && !txt.textContent && !txt.innerText) {
           each(geByTag('br', txt), function(k, br) {
-            txt.removeChild(br);
+            re(br);
           })
         }
         if (opts.checkEditable) {
@@ -410,7 +410,7 @@ onEditablePaste: function(txt, opts, optId, e, onlyFocus) {
   var text = this.getClipboard(e);
   var textRangeAndNoFocus = text && range && !onlyFocus;
 
-  if (inArray('text/html', e.clipboardData.types) && inArray('Files', e.clipboardData.types)) {
+  if (e.clipboardData && inArray('text/html', e.clipboardData.types) && inArray('Files', e.clipboardData.types)) {
     cancelEvent(e);
   }
 

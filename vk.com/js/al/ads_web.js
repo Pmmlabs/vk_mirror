@@ -226,7 +226,7 @@ AdsWeb.deleteSite = function(actionParams) {
   }
 }
 
-AdsWeb.changeSiteParams = function(actionParams) {
+AdsWeb.changeSiteParams = function(actionParams, doneRedirect) {
   if (!Ads.lock('changeSiteParams', onLock, onUnlock)) {
     return;
   }
@@ -239,7 +239,7 @@ AdsWeb.changeSiteParams = function(actionParams) {
   function onComplete(response) {
     Ads.unlock('changeSiteParams');
     if (response && response.ok) {
-      nav.reload();
+      nav.go(doneRedirect);
     } else {
       var msg = ((response && response.msg) ? response.msg : getLang('ads_error_unexpected_error_try_later'));
       showFastBox(getLang('global_error'), msg);
