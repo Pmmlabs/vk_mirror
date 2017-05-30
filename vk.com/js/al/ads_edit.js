@@ -1795,6 +1795,18 @@ AdsViewEditor.prototype.initHelpParam = function(paramNameHelp) {
       handler = function(event){ AdsEdit.onHelpTooltipEvent(event, paramNameHelp, context, showTooltip, hideTooltip); }.bind(this);
       AdsEdit.initHelpTooltipTarget(targetElem, handler, this.cur);
       break;
+    case 'cost_type_promoted_posts_cpc':
+      targetElem = ge(this.options.targetIdPrefix + 'cost_type').parentNode;
+      var showTooltip = function() { AdsEdit.showHelpCriterionTooltip(paramNameHelp, targetElem, handler, this.help[paramNameHelp], helpText, shiftLeft, shiftTop, this.cur); }.bind(this);
+      var hideTooltip = function() { AdsEdit.hideHelpTooltip(this.help[paramNameHelp].tt); }.bind(this);
+      handler = function(event) {
+        if (!this.params || !this.params.format_type || this.params.format_type.value != AdsEdit.ADS_AD_FORMAT_TYPE_PROMOTED_POST) {
+          return;
+        }
+        AdsEdit.onHelpTooltipEvent(event, paramNameHelp, context, showTooltip, hideTooltip);
+      }.bind(this);
+      AdsEdit.initHelpTooltipTarget(targetElem, handler, this.cur);
+      break;
   }
 }
 
