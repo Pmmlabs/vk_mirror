@@ -1537,10 +1537,10 @@ AdsViewEditor.prototype.init = function(options, editor, targetingEditor, params
     link_domain_confirm:        {value: 0},
     title:                      {value: '', value_escaped: '', value_default: '', max_length: 0, max_new_lines: 0, value_max: '', update_value_max: true},
     description:                {value: '', value_escaped: '', value_default: '', max_length: 0, max_new_lines: 0, max_length_normal: 0, max_length_mobile: 0},
-    category1_id:               {value: 0, data: []},
-    subcategory1_id:            {value: 0, data: []},
-    category2_id:               {value: 0, data: []},
-    subcategory2_id:            {value: 0, data: []},
+    category1_id:               {value: '', data: []},
+    subcategory1_id:            {value: '', data: []},
+    category2_id:               {value: '', data: []},
+    subcategory2_id:            {value: '', data: []},
     stats_url:                  {value: ''},
     disclaimer_medical:         {value: 0, may_be_any: false},
     disclaimer_specialist:      {value: 0},
@@ -2013,9 +2013,15 @@ AdsViewEditor.prototype.initUiParam = function(paramName) {
       targetElem = ge(this.options.targetIdPrefix + paramName);
       targetElem.removeAttribute('autocomplete');
       this.params[paramName].ui = new Dropdown(targetElem, this.getUiParamData(paramName), {
+        introText:    getLang('ads_select_category'),
+        placeholder:  getLang('ads_select_category'),
         selectedItem: this.params[paramName].value,
         disabledText: this.getUiParamDisabledText(paramName),
         big:          true,
+        autocomplete: true,
+        indexkeys:    [1, 4],
+        includeLabelsOnMatch: true,
+        preventDuplicates:    true,
         width:        this.options.uiWidth,
         onChange:     function(value) { this.onUiChange(paramName, value); }.bind(this)
       });
