@@ -520,7 +520,7 @@ _videoHashesHideRow: function(ref) {
   }, 200);
 },
 
-videoHashesRemove: function(btn, videoId, sourceVideoId, claimId, localClaimId, relevance, hash) {
+videoHashesRemove: function(btn, videoId, sourceVideoId, claimId, localClaimId, relevance, hash, collection) {
   Claims._videoHashesHideRow(btn);
   ajax.post('/claims', {
     act: 'a_claim_video_remove',
@@ -529,11 +529,12 @@ videoHashesRemove: function(btn, videoId, sourceVideoId, claimId, localClaimId, 
     source_video: sourceVideoId,
     claim_id: claimId,
     local_claim_id: localClaimId,
-    relevance: relevance
+    relevance: relevance,
+    collection: collection
   });
 },
 
-videoHashesSkip: function(btn, videoId, sourceVideoId, claimId, localClaimId, relevance, hash) {
+videoHashesSkip: function(btn, videoId, sourceVideoId, claimId, localClaimId, relevance, hash, collection) {
   Claims._videoHashesHideRow(btn);
   ajax.post('/claims', {
     act: 'a_claim_video_skip',
@@ -542,11 +543,12 @@ videoHashesSkip: function(btn, videoId, sourceVideoId, claimId, localClaimId, re
     source_video: sourceVideoId,
     claim_id: claimId,
     local_claim_id: localClaimId,
-    relevance: relevance
+    relevance: relevance,
+    collection: collection
   });
 },
 
-videoHashesUnban: function(btn, videoId, sourceVideoId, claimId, localClaimId, relevance, hash) {
+videoHashesUnban: function(btn, videoId, sourceVideoId, claimId, localClaimId, relevance, hash, collection) {
   Claims._videoHashesHideRow(btn);
   ajax.post('/claims', {
     act: 'a_claim_video_unban',
@@ -555,7 +557,8 @@ videoHashesUnban: function(btn, videoId, sourceVideoId, claimId, localClaimId, r
     source_video: sourceVideoId,
     claim_id: claimId,
     local_claim_id: localClaimId,
-    relevance: relevance
+    relevance: relevance,
+    collection: collection
   });
 },
 
