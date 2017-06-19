@@ -3388,6 +3388,7 @@ Ads.retargetingUpdateWip = function (unionId) {
         clearInterval(cur.adsRetargetingWipInterval);
         cur.adsRetargetingWipInterval = null;
       }
+      return true;
     }
   });
 }
