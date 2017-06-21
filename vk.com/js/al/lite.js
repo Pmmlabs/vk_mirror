@@ -2715,6 +2715,7 @@ function toggle(elem, v) {
   } else {
     hide(elem);
   }
+  return v;
 }
 
 window.hfTimeout = 0;
@@ -6216,27 +6217,35 @@ function getAudioPlayer() {
   stManager.add(['audioplayer.js', 'audioplayer.css', 'ui_common.js', 'ui_common.css'], getAudioPlayer.run);
   return getAudioPlayer.wrapper;
 }
-
-function audioShowActionTooltip(btn) {
+function audioShowActionTooltip(btn, shift, needDownAndLeft) {
   if (cur._addRestoreInProgress) return;
 
   var audioRow = gpeByClass('_audio_row', btn);
-  var text = btn.id;
-
-  var audioFullId = domData(audioRow, 'full-id');
+  let audioObject = AudioUtils.getAudioFromEl(audioRow, true)
+  var action = domData(btn, 'action');
+  var text
 
   var audioAddRestoreInfo = AudioUtils.getAddRestoreInfo();
 
-  switch(text) {
+  switch(action) {
+    case 'current_delete':
+      text = getLang('audio_delete_from_current')
+      break
+
+    case 'recoms_delete':
+      text = getLang('audio_dont_show');
+      break
+
+    case 'listened_delete':
+      text = getLang('audio_remove_from_list');
+      break
+
     case 'delete':
       if (window.AudioPage && AudioPage.isInRecentPlayed(audioRow)) { // todo: little bit hacky
         text = getLang('audio_remove_from_list');
 
-      } else if (hasClass(audioRow, 'recoms')) {
-        text = getLang('audio_dont_show');
-
       } else {
-        var restores = audioAddRestoreInfo[audioFullId];
+        var restores = audioAddRestoreInfo[audioObject.fullId];
         if (restores && restores.deleteAll) {
           text = restores.deleteAll.text;
         } else {
@@ -6245,27 +6254,25 @@ function audioShowActionTooltip(btn) {
       }
       break;
 
+    case 'restore_recoms':
+      text = getLang('audio_restore_audio');
+      break
+
     case 'add':
-      if (hasClass(audioRow, 'recoms') && hasClass(audioRow, 'audio_deleted')) {
+      var info = audioAddRestoreInfo[audioObject.fullId];
+
+      if (info && info.state == 'deleted') {
         text = getLang('audio_restore_audio');
 
+      } else if (info && info.state == 'added') {
+        text = getLang('global_delete_audio');
+
       } else {
-
-        var info = audioAddRestoreInfo[audioFullId];
-
-        if (info && info.state == 'deleted') {
-          text = getLang('audio_restore_audio');
-
-        } else if (info && info.state == 'added') {
-          text = getLang('global_delete_audio');
-
+        var audioPage = window.AudioPage ? currentAudioPage(btn) : false;
+        if (audioPage && audioPage.getOwnerId() < 0 && audioPage.canAddToGroup()) {
+          text = getLang('audio_add_to_group');
         } else {
-          var audioPage = window.AudioPage ? currentAudioPage(btn) : false;
-          if (audioPage && audioPage.getOwnerId() < 0 && audioPage.canAddToGroup()) {
-            text = getLang('audio_add_to_group');
-          } else {
-            text = getLang('audio_add_to_audio');
-          }
+          text = getLang('audio_add_to_audio');
         }
       }
       break;
@@ -6278,12 +6285,12 @@ function audioShowActionTooltip(btn) {
       text = (cur.lang && cur.lang.global_audio_set_next_audio) || getLang('audio_set_next_audio');
       break;
 
-    case 'recom':
+    case 'recoms':
       text = getLang('audio_show_recommendations');
       break;
   }
 
-  var options = {text: function() { return text; }, black: 1, shift: [7, 5, 0], needLeft: true};
+  var options = {text: function() { return text; }, black: 1, shift: shift ? shift : [7, 4, 0], needLeft: true, forcetodown: needDownAndLeft };
 
   if (gpeByClass('_im_mess_stack', btn)) {
     options.appendParentCls = '_im_mess_stack';
@@ -6312,14 +6319,6 @@ function playAudioNew() {
 
 function currentAudioId() {
   return window.audioPlayer && audioPlayer.id;
-}
-
-function addAudio(btn, event) {
-  stManager.add(['audioplayer.js'], function() {
-    AudioUtils.addAudio(btn);
-  });
-
-  return cancelEvent(event);
 }
 
 function showAudioClaimWarning(owner_id, id, claim_id, title, reason) {
