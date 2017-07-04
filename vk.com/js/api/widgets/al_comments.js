@@ -1220,7 +1220,7 @@ var WComments = {
               hideProgress: unlockButton.pbind(ge('reply_button' + post))
             });
 
-            if (params.from_group || !params.message) return;
+            if (params.from_oid || !params.message) return;
 
             var repliesEl = ge('replies' + post),
                 replyId = -(++cur.wallMyRepliesCnt);
