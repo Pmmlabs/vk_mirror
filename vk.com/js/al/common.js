@@ -10317,10 +10317,8 @@ ElementTooltip.prototype.updatePosition = function() {
       removeClass(this._ttel, 'eltt_' + s);
     }
   }.bind(this));
-  removeClass(_this._ttel, 'eltt_shown');
 
   addClass(this._ttel, 'eltt_' + side);
-  addClassDelayed(this._ttel, 'eltt_shown');
   setStyle(this._ttel, style);
 }
 
