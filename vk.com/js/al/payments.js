@@ -661,8 +661,8 @@ var MoneyTransfer = {
     checkTextLength(cur.paymentsOptions.maxTextLength, ge('transfer_comment'),  ge('transfer_comment_limit_message'), false, true);
     (val('transfer_comment_limit_message') && isVisible('transfer_comment_limit_message') ? hide : show)('payments_money_transfer_fee_link');
   },
-  aboutBox: function() {
-    return !showFastBox({title: getLang('payments_money_transfer_about_title'), width: 560}, getLang('payments_money_transfer_about_text'));
+  aboutBox: function(textKey) {
+    return !showFastBox({title: getLang('payments_money_transfer_about_title'), width: 560}, getLang(textKey));
   },
   showError: function(msg, type) {
     if (msg) {
