@@ -3636,7 +3636,7 @@ var Wall = {
 
     if (replyAs) {
       var onBehalfGroup = isVisible(replyAs.parentNode) && replyOid < 0 && replyTo && replyTo.getAttribute('rid') === replyOid;
-      Wall.setReplyAsGroup(replyAs, {from: replyOid});
+      Wall.setReplyAsGroup(replyAs, {from: (onBehalfGroup ? replyOid : vk.id)});
     }
 
     cur.onReplyFormSizeUpdate && cur.onReplyFormSizeUpdate();
