@@ -578,7 +578,6 @@ VK.External = {
   scrollWindow: function(b,a){VK.callMethod("scrollWindow",b,a)},
   setLocation: function(a,b){VK.callMethod("setLocation",a,b)},
   setTitle: function(a){VK.callMethod("setTitle",a)},
-  saveWallPost: function(a){VK.callMethod("saveWallPost",a)},
   showProfilePhotoBox: function(a){VK.callMethod("showProfilePhotoBox",a)},
   showMerchantPaymentBox: function(a){VK.callMethod("showMerchantPaymentBox",a)}
 };
