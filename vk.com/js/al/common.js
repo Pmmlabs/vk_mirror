@@ -78,6 +78,15 @@ var browser = {
 };
 var mobPlatforms = {1:1,2:1,3:1,4:1,5:1};
 
+//
+// Feature detection
+//
+var browserFeatures = {
+  // Detect wheel event
+  wheelEvent: 'onwheel' in ce('div') ? 'wheel' : (document.onmousewheel !== void 0 ? 'mousewheel' : (browser.mozilla ? 'MozMousePixelScroll' : 'DOMMouseScroll')),
+  hasBoundingClientRect: 'getBoundingClientRect' in ce('div')
+};
+
 (function() {
   var flash = [0, 0, 0], axon = 'ShockwaveFlash.ShockwaveFlash';
   var wrapType = 'embed', wrapParam = 'type="application/x-shockwave-flash" ';
@@ -2426,19 +2435,27 @@ function compareScrollStyles(st, newSt) {
 }
 
 function updateNarrow() {
-  var bar = ge('narrow_column'), barBlock = bar && geByClass1('page_block', bar),
-      wideCol = ge('wide_column');
+  cur.__narrowBar = cur.__narrowBar || {};
+  cur.__narrowBar.bar = cur.__narrowBar.bar || ge('narrow_column');
+  cur.__narrowBar.barBlock = cur.__narrowBar.bar && geByClass1('page_block', cur.__narrowBar.bar);
+  cur.__narrowBar.wideCol = cur.__narrowBar.wideCol || ge('wide_column');
+  cur.__narrowBar.isBarFixed = cur.__narrowBar.isBarFixed || getStyle(cur.__narrowBar.bar, 'position') === 'fixed';
+  cur.__narrowBar.pl = cur.__narrowBar.pl || ge('page_layout');
+
+  var bar = cur.__narrowBar.bar, barBlock = cur.__narrowBar.barBlock,
+      wideCol = cur.__narrowBar.wideCol,
+      scrollY = scrollGetY();
   if (browser.mobile || !bar || !barBlock || !wideCol || isVisible(boxLoader) || isVisible(boxLayerBG) || isVisible(layerBG)) return;
 
-  var wh = window.lastWindowHeight || 0, st = Math.min(scrollGetY(), bodyNode.clientHeight - wh),
-      pl = ge('page_layout'), headH = vk.staticheader ? Math.max(0, getPageHeaderHeight() - st) : getPageHeaderHeight(),
-      isFixed = getStyle(bar, 'position') == 'fixed',
-      barMT = floatval(getStyle(barBlock, 'marginTop')), barH = getSize(bar)[1] - (isFixed ? barMT : 0),
+  var wh = window.lastWindowHeight || 0, st = Math.min(scrollY, bodyNode.clientHeight - wh),
+      pl = cur.__narrowBar.pl, headH = vk.staticheader ? Math.max(0, getPageHeaderHeight() - st) : getPageHeaderHeight(),
+      isFixed = cur.__narrowBar.isBarFixed,
+      barMT = floatval(getStyle(cur.__narrowBar.barBlock, 'marginTop')), barH = getSize(bar)[1] - (isFixed ? barMT : 0),
       pageH = getSize(wideCol)[1], pagePos = getXY(wideCol)[1], tooBig = barH >= pageH - barMT, barMB = barMT,
       barBottom = st + wh - pageH - pagePos - barMB,
       barPB = Math.max(0, barBottom), barPT = pagePos - headH,
       barPos = getXY(bar)[1] + (isFixed ? barMT : 0),
-      lastSt = cur.lastSt || 0, lastStyles = cur.lastStyles || {}, styles, needFix = false,
+      lastSt = cur.__narrowBar.lastSt || 0, lastStyles = cur.__narrowBar.lastStyles || {}, styles, needFix = false,
       smallEnough = headH + barMB + barH + barMT + barPB <= wh && !cur.narrowHide, delta = 1;
 
   if (st - delta < barPT && !(smallEnough && browser.msie && barPos < headH + barMT) || tooBig) {
@@ -2468,25 +2485,32 @@ function updateNarrow() {
       lastStyles[i] = null;
     });
     setStyle(bar, extend(lastStyles, styles));
-    cur.lastStyles = styles;
+    cur.__narrowBar.lastStyles = styles;
   }
   if (needFix !== isFixed) {
     toggleClass(bar, 'fixed', needFix);
   }
-  cur.lastSt = st;
+  cur.__narrowBar.lastSt = st;
+  cur.__narrowBar.isBarFixed = needFix;
 }
 
 function updateLeftMenu() {
-  var menu = ge('side_bar_inner'), pageBody = ge('page_body');
+  cur.__leftMenu = cur.__leftMenu || {};
+  cur.__leftMenu.lmBar = cur.__leftMenu.lmBar || ge('side_bar_inner');
+  cur.__leftMenu.lmFixed = cur.__leftMenu.lmFixed || getStyle(cur.__leftMenu.lmBar, 'position') === 'fixed';
+  cur.__leftMenu.lmMarginTop = floatval(getStyle(cur.__leftMenu.lmBar, 'marginTop'));
+  cur.__leftMenu.pl = cur.__leftMenu.pl || ge('page_layout');
+
+  var menu = cur.__leftMenu.lmBar, pageBody = ge('page_body');
   if (browser.mobile || !menu || !pageBody) return;
 
   var wh = window.lastWindowHeight || 0, st = Math.min(scrollGetY(), bodyNode.clientHeight - wh), pos = 0,
-      pl = ge('page_layout'), headH = getPageHeaderHeight(),
+      pl = cur.__leftMenu.pl, headH = getPageHeaderHeight(),
       headCalcH = Math.min(Math.max(0, headH - st), headH),
-      isFixed = getStyle(menu, 'position') == 'fixed',
-      menuH = getSize(menu)[1], menuPos = isFixed ? getXY(menu)[1] : floatval(getStyle(menu, 'marginTop')),
+      isFixed = cur.__leftMenu.lmFixed,
+      menuH = getSize(menu)[1], menuPos = isFixed ? getXY(menu)[1] : cur.__leftMenu.lmMarginTop,
       pageH = getSize(pageBody)[1], pagePos = pageBody.offsetTop, tooBig = menuH >= pageH,
-      lastSt = window.menuLastSt || 0, lastStyles = window.menuLastStyles || {}, styles, delta = 1,
+      lastSt = cur.__leftMenu.menuLastSt || 0, lastStyles = cur.__leftMenu.menuLastStyles || {}, styles, delta = 1,
       noScrollDelta = cur.leftMenuDelta || 0;
   delete cur.leftMenuDelta;
 
@@ -2528,9 +2552,13 @@ function updateLeftMenu() {
       bottom: null
     };
     setStyle(menu, extend(defaultStyles, styles));
-    window.menuLastStyles = styles;
+    cur.__leftMenu.menuLastStyles = styles;
   }
-  window.menuLastSt = st;
+  cur.__leftMenu.menuLastSt = st;
+  cur.__leftMenu.lmFixed = styles.position === 'fixed';
+  if (cur.__leftMenu.lmMarginTop !== styles.marginTop) {
+    cur.__leftMenu.lmMarginTop = styles.marginTop;
+  }
 }
 
 function updateSTL() {
