@@ -7002,8 +7002,12 @@ function radiobtn(el, v, name) {
   each(radioBtns[name].els, function() {
     if (this == el) {
       addClass(this, 'on');
+      this.setAttribute('aria-checked', 'true');
+      this.setAttribute('tabindex', '0');
     } else {
       removeClass(this, 'on');
+      this.setAttribute('aria-checked', 'false');
+      this.setAttribute('tabindex', '-1');
     }
   });
   return radioBtns[name].val = v;
@@ -10066,6 +10070,7 @@ function toggleOnline(obj, platform) {
 function updateAriaElements() {
   updateOnlineText();
   updateAriaCheckboxes();
+  updateAriaRadioBtns();
 }
 
 function updateOnlineText() {
@@ -10123,6 +10128,65 @@ function updateAriaCheckboxes() {
       }
     });
   }, 100);
+}
+
+/**
+ * Обновляет aria аттрибуты для radio buttons.
+ */
+function updateAriaRadioBtns() {
+  clearTimeout(cur.updateRadioBtnsTO);
+  cur.updateRadioBtnsTO = setTimeout(function() {
+    var btnWrappers = [],
+        els = geByClass('radiobtn');
+
+    each(els, function () {
+      if (this.tagName === 'DIV' && !this.getAttribute('role')) {
+
+        var checked = isChecked(this);
+
+        this.setAttribute('role', 'radio');
+        this.setAttribute('aria-checked', checked ? 'true' : 'false');
+        this.setAttribute('tabindex', checked ? 0 : -1);
+
+        var btnWrap = getRadioBtnWrap(this);
+        if (!~btnWrappers.indexOf(btnWrap)) {
+          btnWrappers.push(btnWrap);
+        }
+      }
+    });
+
+    each(btnWrappers, function () {
+      var checkedBtns = geByClass('on', this);
+      if (!checkedBtns.length) {
+        var btns = geByClass('radiobtn', this);
+        if (btns.length) {
+          btns[0].setAttribute('tabindex', 0);
+        }
+      }
+    });
+
+  }, 100);
+}
+
+/**
+ * Возвращает узел который является враппером для radioButton.
+ * @param el - элемент radioButton
+ * @returns Node
+ */
+function getRadioBtnWrap(el) {
+  var groupEl = el,
+    deep = 0,
+    maxDeep = 5;
+
+  while (deep < maxDeep && groupEl !== document) {
+    groupEl = domPN(groupEl);
+    var radioBtns = geByClass('radiobtn', groupEl);
+    if (radioBtns.length > 1) {
+      break;
+    }
+    deep++;
+  }
+  return groupEl;
 }
 
 
