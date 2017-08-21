@@ -7006,8 +7006,10 @@ function radiobtn(el, v, name) {
       this.setAttribute('tabindex', '0');
     } else {
       removeClass(this, 'on');
-      this.setAttribute('aria-checked', 'false');
-      this.setAttribute('tabindex', '-1');
+      if (this.setAttribute) {
+        this.setAttribute('aria-checked', 'false');
+        this.setAttribute('tabindex', '-1');
+      }
     }
   });
   return radioBtns[name].val = v;
