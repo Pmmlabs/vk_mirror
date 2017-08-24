@@ -7049,8 +7049,14 @@ function renderFlash(cont, opts, params, vars) {
   return true;
 }
 
-function showAudioClaimWarning(owner_id, id, claim_id, title, reason) {
+function showAudioClaimWarning(audio, claim, onReplace) {
   var claimText, claimTitle;
+  var id = audio.id;
+  var ownerId = audio.ownerId;
+  var title = audio.title;
+  var claimId = claim.id;
+  var deleteHash = claim.deleteHash;
+  var reason = claim.reason;
 
   if (reason == 'geo') {
     claimText = getLang('audio_claimed_geo'); //getLang(claim_id >= 0 ? 'audio_claimed_geo' : 'audio_claimed_text_geo');
@@ -7061,9 +7067,13 @@ function showAudioClaimWarning(owner_id, id, claim_id, title, reason) {
   }
 
   claimText = claimText.split('{audio}').join('<b>' + title + '</b>');
-  claimText = claimText.split('{objection_link}').join('<a href="/help?act=cc_objection&claim=' + claim_id + '&content=audio' + owner_id + '_' + id + '">' + getLang('audio_claim_objection') + '</a>');
-  claimText = claimText.split('{delete_link}').join('<a onclick="deleteAudioOnClaim(' + owner_id + ',' + id + '); return false;">' + getLang('audio_claim_delete') + '</a>');
-  cur.claimWarning = showFastBox({title: claimTitle, width: 470}, claimText);
+  claimText = claimText.split('{objection_link}').join('<a href="/help?act=cc_objection&claim=' + claimId + '&content=audio' + ownerId + '_' + id + '">' + getLang('audio_claim_objection') + '</a>');
+  claimText = claimText.split('{delete_link}').join('<a onclick="deleteAudioOnClaim(' + ownerId + ',' + id + '); return false;">' + getLang('audio_claim_delete') + '</a>');
+  var showDialog = showFastBox.bind(null, {title: claimTitle, width: 470}, claimText);
+  if (onReplace) {
+    showDialog = showDialog.bind(null, getLang('box_close'), null, getLang('audio_replace_with_original'), onReplace);
+  }
+  cur.claimWarning = showDialog();
 }
 
 function sureDeleteAll(title, text, where, objectId, toId, fromId, hash, event) {
