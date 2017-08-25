@@ -1643,7 +1643,7 @@ AdsViewEditor.prototype.init = function(options, editor, targetingEditor, params
     link_type:                  {value: 0, subvalue: '', complete: false, allow_edit_all: false, allow_edit_link: false, editing: false, cancelling: false, force_show_other_link_types: false},
     link_id:                    {value: '', data: [], video_value: '', promoted_post_text: '', app_game_links_ids: {}, app_admin_links_ids: {}, app_in_news_links_ids: {}, app_trusted_links_ids: {}, promoted_post_checked: false, promoted_posts_cpc: false},
     link_owner_id:              {value: '',           video_value: ''},
-    link_url:                   {value: '', video_value: '', video_preview_hash: '', is_ok: false, event_final_time: 1},
+    link_url:                   {value: '', video_value: '', video_preview_hash: '', is_ok: false, event_final_time: 1, force_show: false},
     link_url_vk:                {value: 0,  link_type_value: 0, link_id_value: 0},
     link_domain:                {value: '', value_escaped: '', link_url: '', delayed_error: '', needed: false, is_ok: false},
     link_domain_confirm:        {value: 0},
@@ -2082,7 +2082,7 @@ AdsViewEditor.prototype.initUiParam = function(paramName) {
       this.cur.destroy.push(function(targetElem){ cleanElems(targetElem); }.pbind(targetElem));
 
       addEvent(ge(this.options.targetIdPrefix + 'post_or_choose_post_link'), 'click', function () {
-        this.forceShowLinkUrl = true;
+        this.params.link_url.force_show = true;
         this.updateUiParamVisibility('link_url');
         this.updateUiParamVisibility('_link_buttons');
         this.updateUiParam('link_url');
@@ -2768,7 +2768,7 @@ AdsViewEditor.prototype.updateUiParamVisibility = function(paramName) {
       break;
     case 'link_url':
       var linkTypeNeedsVisibleLinkUrl = inArray(this.params.link_type.value, [AdsEdit.ADS_AD_LINK_TYPE_URL, AdsEdit.ADS_AD_LINK_TYPE_VIDEO, AdsEdit.ADS_AD_LINK_TYPE_MOBILE_APP_ANDROID, AdsEdit.ADS_AD_LINK_TYPE_MOBILE_APP_IPHONE, AdsEdit.ADS_AD_LINK_TYPE_MOBILE_APP_WPHONE]);
-      var showPromotedPostLinkUrl = inArray(this.params.link_type.value, AdsEdit.ADS_AD_LINK_TYPES_ALL_POST) && (!!this.params.link_url.value || this.forceShowLinkUrl);
+      var showPromotedPostLinkUrl = inArray(this.params.link_type.value, AdsEdit.ADS_AD_LINK_TYPES_ALL_POST) && (!!this.params.link_url.value || this.params.link_url.force_show);
       this.params[paramName].hidden = !(linkTypeNeedsVisibleLinkUrl || showPromotedPostLinkUrl);
 
       this.initUiParam(paramName);
