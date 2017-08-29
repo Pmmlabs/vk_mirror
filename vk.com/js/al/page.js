@@ -1690,7 +1690,8 @@ var Wall = {
         } else {
           removeClass(geByClass1('post_actions', 'post' + post), 'post_actions_progress');
         }
-      }
+      },
+      noSort: true
     });
   },
   fixPost: function (link, post, hash, value) {
@@ -3031,7 +3032,8 @@ var Wall = {
         },
         hideProgress: function() {
           unlockButton(sendBtn);
-        }
+        },
+        noSort: true
       });
     }, 0);
   },
@@ -4856,8 +4858,6 @@ var Wall = {
         res.module += '_ads_promoted_post';
       }
     }
-
-    if (!hasClass(el, 'own') && !isAdsPromotedPost) return res;
 
     if (m = el.id.match(/^post(-?\d+_\d+)$/)) {
       res[m[1]] = 1;
