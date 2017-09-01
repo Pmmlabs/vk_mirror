@@ -1225,12 +1225,17 @@ function setStyle(elem, name, value){
       }
       elem.style.zoom = 1;
     };
-    elem.style.opacity = value;
+    if (elem.style.opacity != value) {
+      elem.style.opacity = value;
+    }
   } else {
     try{
       var isN = typeof(value) == 'number';
       if (isN && (/height|width/i).test(name)) value = Math.abs(value);
-      elem.style[name] = isN && !(/z-?index|font-?weight|opacity|zoom|line-?height/i).test(name) ? value + 'px' : value;
+      value = isN && !(/z-?index|font-?weight|opacity|zoom|line-?height/i).test(name) ? value + 'px' : value;
+      if (elem.style[name] != value) {
+        elem.style[name] = value;
+      }
     } catch(e){debugLog('setStyle error: ', [name, value], e);}
   }
 }
@@ -9802,7 +9807,7 @@ function langDate(rawDate, langKey, offset, months, onlyDate, addPrep) {
     if (rawDate > 2147483646 * 1000) { // some guys have this in _bday_year_ field!
       rawDate = 0;
     }
-    rawDate= rawDate + offset;
+    rawDate = rawDate + offset;
 
     date = new Date(rawDate);
   } else {
