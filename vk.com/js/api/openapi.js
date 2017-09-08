@@ -2601,6 +2601,17 @@ if (!VK.Retargeting) {
       }
 
       (window.Image ? (new Image()) : document.createElement('img')).src = 'https://vk.com/rtrg?p=' + this.pixelCode + '&audience=' + audienceID;
+    },
+    ProductEvent: function (priceListID, event, params) {
+      if (!this.pixelCode || !event || !priceListID) {
+        return;
+      }
+
+      (window.Image ? (new Image()) : document.createElement('img')).src =
+        'https://vk.com/rtrg?p=' + this.pixelCode +
+        '&products_event=' + event +
+        '&price_list_id=' + priceListID +
+        (params ? ('&products_params=' + encodeURIComponent(JSON.stringify(params))) : '');
     }
   };
 }
