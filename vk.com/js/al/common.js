@@ -354,6 +354,9 @@ function getTemplate(tplName, state) {
   var tpls = window.templates = window.templates || {},
       tpl = tpls[tplName];
 
+  if (typeof tpl === 'function') {  // function that returns actual template string
+    tpl = tpl();
+  }
   if (tpl && state) {
     return rs(tpl, state);
   }
@@ -4205,7 +4208,10 @@ function HistoryAndBookmarks(params) {
         try {
           if (window.saveScrollTopOnBack) {
             delete window.saveScrollTopOnBack;
-            history.replaceState({scrollTop: window.lastScrollTop}, '', '/' + l);
+            history.replaceState({scrollTop: window.lastScrollTop, preventScroll: window.preventLocationScroll}, '', '/' + l);
+            if (window.preventLocationScroll) {
+              delete window.preventLocationScroll;
+            }
           }
           history.pushState({}, '', '/' + curLoc);
           return;
@@ -5218,10 +5224,12 @@ var nav = {
 
       handlePageParams(params);
 
-      if (opts.scrollTop > 0) {
-        scrollToY(opts.scrollTop, 0);
-      } else if (!opts.noscroll && !params.noscroll) {
-        scrollToTop(0);
+      if (!opts.preventScroll) {
+        if (opts.scrollTop > 0) {
+          scrollToY(opts.scrollTop, 0);
+        } else if (!opts.noscroll && !params.noscroll) {
+          scrollToTop(0);
+        }
       }
 
       if (opts.bench) {
@@ -11207,7 +11215,7 @@ window.getPageHeaderHeight = (function() {
 
   function saveIdled() {
     if (started.length) {
-      lsSetIdled(elemsToData(started, true));
+      lsSetIdled(elemsToData(started, true, true));
       timerSaveIdled = setTimeout(saveIdled, INTERVAL_IDLE);
     }
   }
@@ -11384,17 +11392,17 @@ window.getPageHeaderHeight = (function() {
     return dataStrings.join(';');
   }
 
-  function elemsToData(elems, noViewIndexIncrement) {
+  function elemsToData(elems, noViewIndexIncrement, noSetProcessed) {
     var data = [];
 
     elems.forEach(function(elem) {
-      data = data.concat(elemToData(elem, noViewIndexIncrement));
+      data = data.concat(elemToData(elem, noViewIndexIncrement, noSetProcessed));
     });
 
     return data;
   }
 
-  function elemToData(elem, noViewIndexIncrement) {
+  function elemToData(elem, noViewIndexIncrement, noSetProcessed) {
     if (isProcessedOrDestroyed(elem)) {
       return [];
     }
@@ -11409,7 +11417,10 @@ window.getPageHeaderHeight = (function() {
       return [];
     }
 
-    elem[PROCESSED] = true;
+    if (!noSetProcessed) {
+      elem[PROCESSED] = true;
+    }
+
     var raws = getPostRaws(elem);
     var sectionLetter = getSectionLetter(raws.module);
     var sessionId = cur.feed_session_id || 'na';
