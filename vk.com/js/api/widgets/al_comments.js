@@ -823,7 +823,6 @@ var WComments = {
             'al_places.php': {'show_photo_place': true},
             'like.php': {'publish_box': true},
             'widget_like.php': {'a_stats_box': true},
-            'widget_post.php': {'subscribed_box': true, 'audio_claim_warning': true},
             'al_wall.php': {'canvas_draw_box': true},
             'al_im.php': {'stickers_store': true, 'sticker_preview': true},
             'al_audio.php': {'choose_box': true}
