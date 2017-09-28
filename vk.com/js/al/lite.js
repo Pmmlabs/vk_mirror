@@ -2282,11 +2282,14 @@ function getTemplate(tplName, state) {
   var tpls = window.templates = window.templates || {},
       tpl = tpls[tplName];
 
+  if (typeof tpl === 'function') {  // function that returns actual template string
+    tpl = tpl();
+  }
   if (tpl && state) {
     return rs(tpl, state);
   }
 
-  return tpl;
+  return tpl || '';
 }
 
 /* Cookie */
