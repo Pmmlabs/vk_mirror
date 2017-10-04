@@ -6,6 +6,7 @@ var Page = {
    * }
    */
   _isAdPost: {},
+  _postsClearTimeoutsCalls: 0,
 
   // mainly used in image paste from clipboard (see Emoji)
   initUploadForImagePaste: function(txtEl, addMedia, blob) {
@@ -456,7 +457,7 @@ var Page = {
     var ch = false;
     for (i in posts) {
       for (j in posts[i]) {
-        if (j == 'module' || j == 'index' || j == 'q') continue;
+        if (j == 'module' || j == 'index' || j == 'q' || j == 'block') continue;
         var pdict = _postsExtras[j];
         if (pdict && pdict.diff == -1) {
           pdict.diff = now - pdict.start;
@@ -469,7 +470,7 @@ var Page = {
     }
   },
   postsSeen: function(posts) {
-    var i, j, ch, p, se, sa, module, query;
+    var i, j, ch, p, se, sa, module, index, block, query;
     if (!vk.id || !posts.length || vk.pd) return;
 
     if (!window._postsSeenModules) _postsSeenModules = {};
@@ -485,11 +486,12 @@ var Page = {
 
       index = posts[i].index;
       query = posts[i].q;
+      block = posts[i].block;
       if (posts[i].hash && !window._postsViewHash) {
         window._postsViewHash = posts[i].hash;
       }
       for (j in posts[i]) {
-        if (j == 'module' || j == 'index' || j == 'q' || j == 'hash') continue;
+        if (j == 'module' || j == 'index' || j == 'q' || j == 'hash' || j == 'block') continue;
 
         _postsSeenModules[j] = module;
         p = posts[i][j];
@@ -515,8 +517,14 @@ var Page = {
         }
 
         ch = _postsSeen[j] = p;
-        _postsExtras[j] = {start: now, diff: -1, index: index, q: query};
-        _postsExtras[j]['session_id'] = cur.feed_session_id ? cur.feed_session_id : 'na';
+        _postsExtras[j] = {
+          start: now,
+          diff: -1,
+          index: index,
+          q: query,
+          block: block,
+          session_id: cur.feed_session_id ? cur.feed_session_id : 'na'
+        };
         Wall.triggerAdPostStat(j, 'impression');
       }
     }
@@ -526,9 +534,16 @@ var Page = {
   },
   postsClearTimeouts: function() {
     clearTimeout(_postsSaveTimer);
-    _postsSaveTimer = setTimeout(Page.postsSave, 2500);
     clearTimeout(_postsSendTimer);
-    _postsSendTimer = setTimeout(Page.postsSend, 5000);
+
+    if (++Page._postsClearTimeoutsCalls < 10) {
+      _postsSaveTimer = setTimeout(Page.postsSave, 2500);
+      _postsSendTimer = setTimeout(Page.postsSend, 5000);
+    } else {
+      Page._postsClearTimeoutsCalls = 0;
+      Page.postsSave();
+      Page.postsSend();
+    }
   },
   postsSave: function() {
     if (!ls.checkVersion() || isEmpty(_postsSeen)) return _postsSeen;
@@ -547,8 +562,12 @@ var Page = {
       sn = _postsSeen[i];
       if (_postsExtras[i]) {
         extras[i] = {
-            diff: _postsExtras[i].diff, index: _postsExtras[i].index,
-            q: _postsExtras[i].q, session_id: _postsExtras[i].session_id ? _postsExtras[i].session_id : 'na'};
+          diff: _postsExtras[i].diff,
+          index: _postsExtras[i].index,
+          q: _postsExtras[i].q,
+          session_id: _postsExtras[i].session_id ? _postsExtras[i].session_id : 'na',
+          block: _postsExtras[i].block
+        };
         delete _postsExtras[i];
       }
       p = i.split('_');
@@ -636,11 +655,9 @@ var Page = {
         var extra = extras[full_id];
         var query_str = (m == 's' && extra && extra.q) ? extra.q : '';
         query_str = query_str.replace(/[,;:]/g, '');
-        if (query_str) {
-          query_str = ':' + query_str;
-        }
         var session_id_str = extra && extra.session_id ? extra.session_id : 'na';
-        var extra_str = (extra && i != 'ad' && i != 'posthashtag') ? (':' + extra.diff + ':' + extra.index + ':' + session_id_str + query_str) : '';
+        var extra_str = (extra && i != 'ad' && i != 'posthashtag') ? (':' + extra.diff + ':' + extra.index + ':' + session_id_str + ':' + (query_str||'') + ':' + (extra.block||'')).replace(/:+$/, '') : '';
+
         r.push(m + ((seen[i][j] > 0) ? j : -j) + extra_str);
       }
       if (r.length) {
@@ -4873,6 +4890,7 @@ var Wall = {
 
     if (el.id.substr(0,6) === 'block_') {
       res[el.id] = 1;
+      res['block'] = el.id.substr(6);
       var contain = attr(el, 'data-contain');
       if (contain) {
         contain = contain.split(',');
