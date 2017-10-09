@@ -8200,7 +8200,7 @@ function showWiki(page, edit, e, opts) {
     extend(params, opts.preload);
   }
 
-  ajax.post('wkview.php', extend({act: 'show', loc: nav.objLoc[0]}, page, opts.ads_params), params);
+  ajax.post('wkview.php', extend({act: 'show', loc: nav.objLoc[0]}, page, opts.ads_params, cur.wkviewOpts), params);
   return cancelEvent(e);
 }
 
