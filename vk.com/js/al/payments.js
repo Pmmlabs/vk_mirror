@@ -439,6 +439,7 @@ var MoneyTransfer = {
       amount: amount,
       currency: cur.paymentsOptions.currency,
       comment: val('transfer_comment'),
+      from: cur.paymentsOptions.from,
       hash: cur.paymentsOptions.hash
     };
     if (cur.paymentsOptions.requestId) {
@@ -485,6 +486,7 @@ var MoneyTransfer = {
       amount: amount,
       currency: cur.paymentsOptions.currency,
       comment: val('transfer_comment'),
+      from: cur.paymentsOptions.from,
       hash: cur.paymentsOptions.hash
     };
     val('payments_box_error', '');
