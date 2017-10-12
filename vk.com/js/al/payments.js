@@ -382,7 +382,7 @@ var MoneyTransfer = {
     box.setOptions({grey: true});
     if (cur.paymentsOptions.requestId) {
       box.changed = true;
-      box.setOptions({width: 560});
+      box.setOptions({width: 480});
       MoneyTransfer.send();
     }
     placeholderInit('transfer_amount');
@@ -415,7 +415,7 @@ var MoneyTransfer = {
     var iframe = ce('iframe', {id: 'transfer_iframe', name: 'transfer_iframe'}, {
       border: 0,
       height: '445px',
-      width: (560 - sbWidth()) + 'px',
+      width: (480 - sbWidth()) + 'px',
       overflowX: 'hidden',
       overflowY: 'hidden'
     });
@@ -456,7 +456,7 @@ var MoneyTransfer = {
           window.addEventListener('message', MoneyTransfer.frameMessage, false);
 
           box.changed = true;
-          box.setOptions({width: 560});
+          box.setOptions({width: 480});
           if (!cur.paymentsOptions.requestId && isVisible(box.titleWrap)) {
             box.setBackTitle(MoneyTransfer.resetSendBox);
           }
@@ -647,7 +647,7 @@ var MoneyTransfer = {
     var iframe = ce('iframe', {id: 'transfer_iframe', name: 'transfer_iframe'}, {
       border: 0,
       height: '445px',
-      width: (560 - sbWidth()) + 'px',
+      width: (480 - sbWidth()) + 'px',
       overflowX: 'hidden',
       overflowY: 'hidden'
     });
@@ -759,7 +759,7 @@ var MoneyTransfer = {
       }
     }
     cur.paymentsOptions.boxTab = tab;
-    val(domPN(ge('payments_money_transfer_summary')), cur.paymentsOptions.boxSections[tab].summary);
+    val('payments_money_transfer_summary', cur.paymentsOptions.boxSections[tab].summary);
     val('payments_money_transfer_send', cur.paymentsOptions.boxSections[tab].btn);
     toggle('payments_money_transfer_nf_warning', tab == 'transfer');
     setTimeout(elfocus.pbind('transfer_amount'), 100);
