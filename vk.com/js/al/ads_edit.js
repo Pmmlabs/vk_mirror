@@ -3605,6 +3605,10 @@ AdsViewEditor.prototype.onUiEvent = function(paramName, event) {
         }
       }
       function checkSpelling(param) {
+        if (param === 'title' && this.params.title.disabled) {
+          return;
+        }
+
         this.updateNeeded['need_' + param + '_spelling'] = true;
         this.needDataUpdate();
       }
@@ -3970,7 +3974,7 @@ AdsViewEditor.prototype.getParams = function() {
   for (var paramName in this.params) {
     params[paramName] = this.params[paramName].value;
   }
-  params.photo_icon = this.params.photo['value_'+AdsEdit.ADS_AD_FORMAT_PHOTO_SIZE_ICON];
+  params.photo_icon   = this.params.photo['value_'+AdsEdit.ADS_AD_FORMAT_PHOTO_SIZE_ICON];
   params.link_subtype = this.params.link_type.subvalue;
   return params;
 }

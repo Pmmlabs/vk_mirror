@@ -2361,6 +2361,8 @@ var Wall = {
     ls.set(Wall.ownerDraftKey(ownerId), extend({ txt: '' }, lsAttaches, { medias: [] }));
   },
   saveOwnerDraftText: function(ownerId) {
+    cur.postFieldZoomText && cur.postFieldZoomText(cur.postField, cur.wallAddMedia);
+
     if (cur.options.no_draft) {
       return;
     }
@@ -2441,6 +2443,8 @@ var Wall = {
     });
   },
   saveDraft: function() {
+    cur.postFieldZoomText && cur.postFieldZoomText(cur.postField, cur.wallAddMedia);
+
     if (cur.options.no_draft) {
       return;
     }
@@ -2582,6 +2586,8 @@ var Wall = {
         cur.shareShowImgRestored = data[3].shareShowImg;
       }
     }
+
+    cur.postFieldZoomText && cur.postFieldZoomText(cur.postField, cur.wallAddMedia);
   },
   initPostEditable: function(draft) {
     var txt = cur.postField;
@@ -2610,8 +2616,20 @@ var Wall = {
 
       if (draft) {
         setTimeout(Wall.setDraft.pbind(draft), 0);
+      } else {
+        cur.postFieldZoomText && cur.postFieldZoomText(cur.postField, cur.wallAddMedia);
       }
     });
+
+    setTimeout(function() {
+      if (cur.postFieldZoomText) {
+        addEvent(txt, 'keydown paste', function() {
+          setTimeout(function() {
+            cur.postFieldZoomText(cur.postField, cur.wallAddMedia);
+          }, 0);
+        });
+      }
+    }, 0);
   },
   showEditPost: function(callback) {
     var input = ge('post_field');
@@ -2642,12 +2660,12 @@ var Wall = {
       if (!cur.composerAdded) {
         stManager.add(['wide_dd.css', 'wide_dd.js'], function() {
           cur.composerAdded = true;
-          composer = Composer.init(input, options);
+          var composer = Composer.init(input, options);
           callback && callback();
           cur.destroy.push(Composer.destroy.bind(Composer).pbind(composer));
         });
       } else {
-        composer = Composer.init(input, options);
+        var composer = Composer.init(input, options);
         callback && callback();
         cur.destroy.push(Composer.destroy.bind(Composer).pbind(composer));
       }
