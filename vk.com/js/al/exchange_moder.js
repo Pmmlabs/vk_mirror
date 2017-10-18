@@ -207,10 +207,11 @@ var ExchangeModer = {
       return;
     }
 
-    if (refundAmount > 20000) {
-      showFastBox(getLang('global_error'), 'Сумма компенсации ограничена 20 000 руб.');
+    // check on server
+    /*if (refundAmount > 10000) {
+      showFastBox(getLang('global_error'), 'Сумма компенсации ограничена 10 000 руб.');
       return;
-    }
+    }*/
 
     var refundComment = ge('exchange_moder_refund_comment').value;
     if (!refundComment) {
