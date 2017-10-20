@@ -673,8 +673,21 @@ getFilesNames: function(iUpload, files) {
   }
 },
 
-checkFileType: function(filename, fileTypes) {
+checkFileType: function(filename, fileTypes, fileDisallowedTypes) {
   var valid = false;
+  if (fileDisallowedTypes && fileDisallowedTypes !== '') {
+    var allowed = true;
+    each(fileDisallowedTypes.split(';'), function(i, type) {
+      type = type.substr(1).toLowerCase();
+      if (filename.substr(-type.length).toLowerCase() == type) {
+        allowed = false;
+        return false;
+      }
+    });
+    if (!allowed) {
+      return false;
+    }
+  }
   each(fileTypes.split(';'), function(i, type) {
     type = type.substr(1).toLowerCase();
     if (filename.substr(-type.length).toLowerCase() == type || type == '.*') {
@@ -693,7 +706,7 @@ onFileApiSend: function(iUpload, files, force) {
   if (options.file_types) {
     var filteredFiles = [];
     each(files, function(i, file) {
-      if (Upload.checkFileType(file.name, options.file_types)) {
+      if (Upload.checkFileType(file.name, options.file_types, options.file_disallowed_types)) {
         filteredFiles.push(file);
       }
     });
