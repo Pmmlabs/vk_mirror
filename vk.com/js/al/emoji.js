@@ -969,7 +969,7 @@ checkStickersKeywords: function(optId, opts, force) {
 
 showStickersHints: function(stCont, opts, html) {
   var inner = stCont && geByClass1('_sticker_hints_inner', stCont);
-  if (!inner) {
+  if (!inner || opts.noStickers) {
     return false;
   }
 
@@ -1474,7 +1474,7 @@ ttClick: function(optId, obj, needHide, needShow, ev, tabKey) {
     if (!Emoji.showShadow()) {
       classAddr += ' emoji_no_opacity';
     }
-    if (opts.noStickers) {
+    if (opts.noStickers || opts.hideStickersInitial) {
       classAddr += ' emoji_no_tabs';
     }
     var tt = ce('div', {
@@ -3377,6 +3377,18 @@ scrollToStickerPack: function (optId, selId, fast) {
     opts.scrollAnimation = 0;
   });
   Emoji.scrollToTab(selId, optId);
+},
+
+toggleStickers: function(optId, noStickers) {
+  var opts = Emoji.opts[optId];
+  if (opts && opts.tt) {
+    opts.noStickers = noStickers;
+    toggleClass(opts.tt, 'emoji_no_tabs', noStickers); // works if init() was with stickers
+    if (opts.curTab)
+      Emoji.tabSwitch(0, 0, optId);
+  } else if (opts) {
+    opts.hideStickersInitial = noStickers;
+  }
 },
 
 __eof: 1}}

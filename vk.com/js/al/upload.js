@@ -710,8 +710,11 @@ onFileApiSend: function(iUpload, files, force) {
         filteredFiles.push(file);
       }
     });
+    if (!filteredFiles.length) {
+      options.onNoFilteredCallback && options.onNoFilteredCallback(files);
+      return;
+    }
     files = filteredFiles;
-    if (!files.length) return;
   }
 
   if (options.filterCallback) {
@@ -1568,17 +1571,8 @@ dragOver: function(iUpload, e) {
     cancelEvent(e);
     return;
   }
-  if (browser.mozilla && intval(browser.version) > 3 && !Upload.options[iUpload].visibleDropbox) {
-    if (cur.dragOverTimer) {
-      clearTimeout(cur.dragOverTimer);
-      delete cur.dragOverTimer;
-    }
-    cur.dragOverTimer = setTimeout(function() {
-      hide(Upload.dropbox[iUpload]);
-    }, 100);
-  }
   var inside = Upload.insideDropbox(iUpload, e);
-  if (e.dataTransfer) {
+  if (e.dataTransfer && e.dataTransfer.dropEffect !== 'copy') {
     e.dataTransfer.dropEffect = inside ? 'copy' : 'none';
   }
   toggleClass(Upload.dropbox[iUpload], 'dropbox_over', inside);
