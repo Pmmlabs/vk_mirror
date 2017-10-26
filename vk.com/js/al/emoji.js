@@ -17,6 +17,12 @@ TAB_EMOJI: 0,
 TAB_RECENT_STICKERS: -1,
 
 CLICK_DELAY: 500,
+SORTED_EMOJI_CATEGORIES: [-1, 1, 3, 8, 2, 4, 5, 6, 7, 9],
+CACHED_HEIGHT_PROP: '_emojiHeight',
+CACHED_WIDTH_PROP: '_emojiWidth',
+BOTTOM_REST_FOR_ADD_EMOJI_CATEGORY: 150,
+SHOW_TT_TIMEOUT: 100,
+HIDE_TT_TIMEOUT: 300,
 
 init: function(txt, opts) {
   var optId = Emoji.last;
@@ -27,6 +33,7 @@ init: function(txt, opts) {
   opts.emojiBtn = domByClass(opts.emojiWrap, '_emoji_btn');
   opts.emojiWrap && data(opts.emojiWrap, 'optId', optId);
   txt.emojiId = optId;
+  opts.lastLoadedEmojiCategoriesIdxes = {};
   if (opts.forceTxt) {
     opts.editable = 0;
     // placeholderSetup(txt);
@@ -1398,7 +1405,10 @@ ttShow: function(optId, obj, ev) {
   if (obj) opts.obj = obj;
   else obj = opts.obj;
 
-  Emoji.ttClick(optId, obj, false, true, ev);
+  opts.stt = setTimeout(function () {
+    Emoji.ttClick(optId, obj, false, true, ev);
+  }, Emoji.SHOW_TT_TIMEOUT);
+
 },
 
 ttHide: function(optId, obj, ev, force) {
@@ -1412,13 +1422,13 @@ ttHide: function(optId, obj, ev, force) {
   obj = obj || opts.obj || geByClass1('emoji_smile', opts.controlsCont);
   var hideTT = function() {
     Emoji.ttClick(optId, obj, true, false, ev);
-  }
-  var showT = opts.ttShowT || 0;
-  if (force || vkNow() - showT < 200) {
+  };
+
+  if (force) {
     hideTT();
   } else {
     clearTimeout(opts.ctt);
-    opts.ctt = setTimeout(hideTT, 300);
+    opts.ctt = setTimeout(hideTT, Emoji.HIDE_TT_TIMEOUT);
   }
 },
 
@@ -1514,8 +1524,7 @@ ttClick: function(optId, obj, needHide, needShow, ev, tabKey) {
     Emoji.emojiExpand(optId, tt);
   }
   if (Emoji.shown) {
-    hide(tt);
-    setStyle(tt, 'opacity', 0);
+    Emoji.hideTt(tt);
     var stCont = geByClass1('_sticker_hints', domPN(opts.txt));
     if (stCont && isVisible(stCont)) {
       Emoji.checkStickersHintsSize(stCont, opts, true);
@@ -1532,8 +1541,7 @@ ttClick: function(optId, obj, needHide, needShow, ev, tabKey) {
     }
   } else {
     opts.openedByTabKey = !!tabKey;
-    show(tt);
-    setStyle(tt, 'opacity', 1);
+    Emoji.showTt(tt);
     Emoji.repositionEmoji(optId, obj, tt);
 
     var stCont = geByClass1('_sticker_hints', domPN(opts.txt));
@@ -1585,7 +1593,6 @@ ttClick: function(optId, obj, needHide, needShow, ev, tabKey) {
   } else {
     removeClass(geByClass1('emoji_tabs', 'emoji_block_'+optId), 'emoji_tabs_no_store');
   }
-
   return cancelEvent(ev);
 },
 curEmojiKeys: {},
@@ -1763,13 +1770,13 @@ updateEmojiCont: function (optId) {
   var opts = Emoji.opts[optId];
 
   if (opts.curTab == 0) {
-    val(geByClass1('emoji_scroll_smiles', opts.tt), Emoji.ttEmojiList(optId));
+    val(geByClass1('emoji_scroll_smiles', opts.tt), Emoji.getInitEmojiContent(optId));
     Emoji.updateEmojiCatTitle(optId);
   }
 },
 
-ttEmojiList: function(optId) {
-  var cats = Emoji.curEmojiCats, res = '';
+ttEmojiList: function(optId, categoryIds) {
+  var res = '';
 
   var emojiList = Emoji.emojiGetRecentFromStorage();
   if (emojiList) {
@@ -1778,21 +1785,80 @@ ttEmojiList: function(optId) {
 
   Emoji.curEmojiCats[-1] = Emoji.getRecentEmojiSorted();
 
-  var sorted_cats = [-1, 1, 3, 8, 2, 4, 5, 6, 7, 9];
-  for(var i in sorted_cats) {
-    var cat_id = sorted_cats[i];
-    var cat = cats[cat_id];
+  var sortedCats = categoryIds ? categoryIds: Emoji.SORTED_EMOJI_CATEGORIES;
 
-    if (!cat.length) {
-      continue;
-    }
-
-    var lng_sub = cat_id == -1 ? 'recent' : cat_id;
-    var cont = '<div class="emoji_cat_title_helper" data-id="' + cat_id + '" id="emoji_recent_list' + optId + '_' + cat_id + '"><div class="emoji_cat_title">' + getLang('global_emoji_cat_' + lng_sub) + '</div></div>';
-    cont += Emoji.emojiGetCatCont(optId, cat);
-    res += cont;
+  for(var i in sortedCats) {
+    var catId = sortedCats[i];
+    res += Emoji.getEmojiCategoryHtml(optId, catId);
   }
   return res;
+},
+
+getInitEmojiContent: function (optId) {
+  Emoji.setEmojiLastAddedCategoryIdx(optId, 1);
+  var recentAndEmotions = [-1, 1];
+  return Emoji.ttEmojiList(optId, recentAndEmotions);
+},
+
+getEmojiCategoryHtml: function (optId, categoryId) {
+  var cats = Emoji.curEmojiCats, res = '';
+  var cat = cats[categoryId];
+  if (!cat.length) {
+    return res;
+  }
+
+  var lngSub = categoryId == -1 ? 'recent' : categoryId;
+  var cont = '<div class="emoji_cat_title_helper" data-id="' + categoryId + '" id="emoji_recent_list' + optId + '_' + categoryId + '"><div class="emoji_cat_title">' + getLang('global_emoji_cat_' + lngSub) + '</div></div>';
+  cont += Emoji.emojiGetCatCont(optId, cat);
+  res += cont;
+
+  return res;
+},
+
+getEmojiLastAddedCategoryIdx: function(optId){
+  var opts = Emoji.opts[optId];
+  return opts.lastLoadedEmojiCategoriesIdxes[optId];
+},
+
+setEmojiLastAddedCategoryIdx: function(optId, idx) {
+  var opts = Emoji.opts[optId];
+  opts.lastLoadedEmojiCategoriesIdxes[optId] = idx;
+},
+
+addNextEmojiCategoty: function (optId) {
+  var opts = Emoji.opts[optId],
+    tt = opts.tt,
+    lastLoadedCategoryIdx = Emoji.getEmojiLastAddedCategoryIdx(optId);
+
+  if (opts.emojiCategoryAdding || opts.allEmojiLoaded) {
+    return;
+  }
+
+  opts.emojiCategoryAdding = true;
+
+  if (!lastLoadedCategoryIdx) {
+    debugLog('No emoji last category idx');
+    return;
+  }
+  var emojiWrap = geByClass1('emoji_scroll_smiles', tt);
+  lastLoadedCategoryIdx++;
+  if (Emoji.SORTED_EMOJI_CATEGORIES.length > lastLoadedCategoryIdx) {
+    var categoryId = Emoji.SORTED_EMOJI_CATEGORIES[lastLoadedCategoryIdx];
+    emojiWrap.insertAdjacentHTML('beforeEnd', Emoji.getEmojiCategoryHtml(optId, categoryId));
+    Emoji.setEmojiLastAddedCategoryIdx(optId, lastLoadedCategoryIdx);
+    opts.emojiScroll.update(); // need if resize sensor not was handled resize.
+  } else {
+    opts.allEmojiLoaded = true;
+  }
+  opts.emojiCategoryAdding = false;
+},
+
+hideTt: function (tt) {
+  removeClass(tt, 'emoji_tt_shown');
+},
+
+showTt: function(tt){
+  addClass(tt, 'emoji_tt_shown');
 },
 
 emojiGetCatCont: function (optId, cat) {
@@ -1806,7 +1872,6 @@ emojiGetCatCont: function (optId, cat) {
   }
   return res;
 },
-
 updateRecentEmoji: function (optId) {
   var emojiList = Emoji.getRecentEmojiSorted(),
     recent_els = Emoji.emojiGetCatCont(optId, emojiList);
@@ -1872,8 +1937,12 @@ updateEmojiCatTitle: function (optId) {
   var els = geByClass('emoji_cat_title_helper', emoji_block_el);
   var st = opts.emojiScroll.data.scrollTop;
   var helper = geByClass1('emoji_cats_title_helper', opts.tt);
+  var rowH, curRow, rowI;
+  if (els.length) {
+    var firstTitle = els[0];
+    rowH = Emoji.getSizeCached(firstTitle)[1];
+  }
 
-  var rowH = getSize(els[0])[1], curRow, rowI;
   for(var i = els.length - 1; i >= 0; i--) {
     if (st > els[i].offsetTop - rowH) {
       curRow = els[i];
@@ -1960,13 +2029,13 @@ reappendEmoji: function(optId, tt) {
   // diff += opts.ttDiff + Emoji.ttShift;
   // setStyle(tt, vk.rtl ? {left: diff} : {right: diff});
   clearTimeout(cur.ttEmojiHide);
-  hide(tt);
+  Emoji.hideTt(tt);
 },
 ttCalcHeight: function(optId, obj, tt) {
-  window.headH = window.headH || ge('page_header') && getSize(ge('page_header'))[1] || 0;
+  window.headH = window.headH || ge('page_header') && Emoji.getSizeCached(ge('page_header'))[1] || 0; // height of header el not changed
   var wh = (window.pageNode && window.browser.mozilla ? Math.min(getSize(pageNode)[1], window.lastWindowHeight) : window.lastWindowHeight) || getScroll()[3],
       scrollY = window.scrollGetY ? scrollGetY() : getScroll()[1],
-      objY = getXY(obj)[1], objH = getSize(obj)[1],
+      objY = getXY(obj)[1], objH = Emoji.getSizeCached(obj)[1], // height of emoji el not changed
       list = geByClass1('emoji_list', tt),
       smileH = Emoji.opts[optId].emojiSmileHeigh,
       headSpace = headH, rowsCnt = Emoji.opts[optId].emojiRowsCount, offsetH = 9, listPadding = 8;
@@ -2037,7 +2106,7 @@ repositionEmoji: function(optId, obj, tt) {
 
   var list = geByClass1('emoji_list', tt),
       firstSmile = geByClass1('emoji_smile_cont', list);
-  Emoji.opts[optId].emojiSmileHeigh = firstSmile && getSize(firstSmile)[1] || 26;
+  Emoji.opts[optId].emojiSmileHeigh = firstSmile && Emoji.getSizeCached(firstSmile)[1] || 26;
   Emoji.opts[optId].emojiRowsCount = 9;
   Emoji.ttCalcHeight(optId, obj, tt);
 },
@@ -2064,6 +2133,7 @@ emojiExpand: function(optId, block) {
       theme: 'default emoji no_transition',
       shadows: true,
       global: true,
+      noForceReFlow: true,
       ondragstart: function() {
         opts.scrolling = true;
       },
@@ -2073,16 +2143,22 @@ emojiExpand: function(optId, block) {
       },
       onscrollstart: function() {
         window.tooltips && tooltips.destroyAll();
+        opts.scrollStarted = true;
       },
       onupdate: function() {
-        if (opts.curTab == Emoji.TAB_EMOJI) {
+        if (opts.curTab == Emoji.TAB_EMOJI && opts.scrollStarted) {
+          if ((opts.emojiScroll.data.scrollBottom - Emoji.BOTTOM_REST_FOR_ADD_EMOJI_CATEGORY) <= 0) {
+            setTimeout(function () {
+              Emoji.addNextEmojiCategoty(optId);
+            }, 0);
+          }
           Emoji.updateEmojiCatTitle(optId);
         } else {
           Emoji.updateShownStickers(optId);
         }
       }
     });
-    opts.imagesLoader = imagesLoader(opts.emojiScroll.scroller, {use_iframe: true, need_load_class: 'emoji_need_load'});
+    opts.imagesLoader = opts.imagesLoader || imagesLoader(opts.emojiScroll.scroller, {use_iframe: true, need_load_class: 'emoji_need_load'});
     if (opts.sharedTT) {
       opts.sharedTT.emojiScroll = opts.emojiScroll;
     }
@@ -2090,7 +2166,6 @@ emojiExpand: function(optId, block) {
 
   opts.emojiExpanded = true;
 },
-
 updateShownStickers: function(optId, noChangeTab) {
   var opts = Emoji.opts[optId];
 
@@ -2640,7 +2715,6 @@ stickerItem: function() {
 hintsStickerItem: function() {
   return '<a id="emoji_sticker_item%optId%_%selId%_%stickerId%" data-pack-id="%selId%" class="emoji_sticker_item %class%" onclick="%onclick%" onmouseover="Emoji.stickerHintOver(this)" onmouseout="Emoji.stickerHintOut(this)"><img class="emoji_sticker_image" src="/images/stickers/%stickerId%/%stickerSize%.png" /></a>';
 },
-
 tabSwitch: function(obj, selId, optId, noScrollUpdate) {
   if (obj == undefined) {
     return;
@@ -2662,7 +2736,7 @@ tabSwitch: function(obj, selId, optId, noScrollUpdate) {
     show(emojiWrap);
 
     if (!opts.emojiInited) {
-      val(emojiWrap, Emoji.getTabCont(optId, Emoji.TAB_EMOJI));
+      val(emojiWrap, Emoji.getInitEmojiContent(optId));
       opts.emojiInited = true;
     }
     if (opts.imagesLoader) {
@@ -2675,7 +2749,6 @@ tabSwitch: function(obj, selId, optId, noScrollUpdate) {
       opts.emojiScroll && opts.emojiScroll.scrollTop(0);
     }
     Emoji.updateRecentEmoji(optId);
-    Emoji.updateEmojiCatTitle(optId);
   } else {
     hide(emojiWrap);
     show(stickersWrap);
@@ -3389,6 +3462,19 @@ toggleStickers: function(optId, noStickers) {
   } else if (opts) {
     opts.hideStickersInitial = noStickers;
   }
+},
+getSizeCached: function (el) {
+  el = ge(el);
+  if (!el) {
+    return [0, 0];
+  }
+
+  if (el[Emoji.CACHED_WIDTH_PROP] === undefined || el[Emoji.CACHED_HEIGHT_PROP] === undefined) {
+    el[Emoji.CACHED_WIDTH_PROP] = el.offsetWidth;
+    el[Emoji.CACHED_HEIGHT_PROP] = el.offsetHeight;
+  }
+
+  return [el[Emoji.CACHED_WIDTH_PROP], el[Emoji.CACHED_HEIGHT_PROP]];
 },
 
 __eof: 1}}
