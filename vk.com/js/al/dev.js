@@ -2048,7 +2048,7 @@ initWidgetAuthConstructor: function(options) {
     clearTimeout(linkTimeout);
     linkTimeout = setTimeout(function() {
       var url = trim(val(link_el));
-      if (url && state.url != url && !/^javascript/i.test(url)) {
+      if (url && state.url != url && !/^javascript/i.test(url.replace(/[\0-\x1F\x7F]/g, ''))) {
         state.url = url;
         updateCode();
       }
