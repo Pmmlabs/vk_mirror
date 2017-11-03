@@ -5799,10 +5799,19 @@ function placeholderInit(id, opts) {
       hide(ph);
       el.phshown = false;
     } else if (!shown && !v) {
-      show(ph);
-      el.phshown = true;
-      if (browser.opera && blur) {
-        el.setAttribute('placeholder', ''); el.removeAttribute('placeholder', '');
+      var showPh = function() {
+        show(ph);
+        el.phshown = true;
+        if (browser.opera && blur) {
+          el.setAttribute('placeholder', ''); el.removeAttribute('placeholder', '');
+        }
+      };
+
+      // IE fix - jumping after clear field
+      if (browser.msie) {
+         setTimeout(showPh, 0);
+      } else {
+        showPh();
       }
     }
   }
