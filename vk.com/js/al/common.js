@@ -4969,7 +4969,7 @@ var nav = {
           changed[i] = false;
         }
       }
-      if (zNav(clone(changed), {hist: opts.hist, asBox: opts.asBox}, objLoc) === false) {
+      if (zNav(clone(changed), {hist: opts.hist, asBox: opts.asBox, onDone: opts.onDone}, objLoc) === false) {
         nav.setLoc(strLoc);
         return false;
       }
@@ -7709,8 +7709,9 @@ function zNav(changed, opts, fin) {
         return false;
         break;
       case 'audio_playlist':
-        AudioUtils.showAudioPlaylist.apply(this, zt[2].split('_').concat(zt[3]))
-        return false
+        var playlistId = zt[2].split('_');
+        AudioUtils.showAudioPlaylist.apply(this, [playlistId[0], playlistId[1], zt[3], undefined, undefined, opts.onDone]);
+        return false;
         break
     }
   }
