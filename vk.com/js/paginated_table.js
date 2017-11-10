@@ -10,6 +10,7 @@ var SUM_PRECISION = 2;
 var AVG_PRECISION = 3;
 var FLOAT_FORMAT_PRECISION = 2;
 var PERCENT_FORMAT_PRECISION = 3;
+var ROUBLE_SIGN = '&#8381;';
 
 var lastStamp;
 var setStamp = function() {lastStamp = new Date().getTime();};
@@ -1842,6 +1843,12 @@ window.PaginatedTable.prototype._formatData = function(data, format, rown, coln)
 
     case 'currency_int':
       return getLang('global_money_amount_rub_short', this._formatData(data, 'delim_int'));
+
+    case 'currency_int_sign':
+      return this._formatData(data, 'delim_int') + '&nbsp;' + ROUBLE_SIGN;
+
+    case 'currency_sign':
+      return this._formatData(data, 'delim_float') + '&nbsp;' + ROUBLE_SIGN;
 
     case 'delim_int':
       s = Number(data);
