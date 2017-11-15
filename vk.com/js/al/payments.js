@@ -382,7 +382,7 @@ var MoneyTransfer = {
     box.setOptions({grey: true});
     if (cur.paymentsOptions.requestId) {
       box.changed = true;
-      box.setOptions({width: 480});
+      box.setOptions({width: 510});
       MoneyTransfer.send();
     }
     placeholderInit('transfer_amount');
@@ -415,7 +415,7 @@ var MoneyTransfer = {
     var iframe = ce('iframe', {id: 'transfer_iframe', name: 'transfer_iframe'}, {
       border: 0,
       height: '445px',
-      width: (480 - sbWidth()) + 'px',
+      width: (510 - sbWidth()) + 'px',
       overflowX: 'hidden',
       overflowY: 'hidden'
     });
@@ -456,7 +456,7 @@ var MoneyTransfer = {
           window.addEventListener('message', MoneyTransfer.frameMessage, false);
 
           box.changed = true;
-          box.setOptions({width: 480});
+          box.setOptions({width: 510});
           if (!cur.paymentsOptions.requestId && isVisible(box.titleWrap)) {
             box.setBackTitle(MoneyTransfer.resetSendBox);
           }
@@ -519,7 +519,7 @@ var MoneyTransfer = {
     hide('payments_money_transfer_iframe');
     show('payments_money_transfer_wrap', 'payments_money_transfer_buttons');
     box.changed = false;
-    box.setOptions({width: 480});
+    box.setOptions({width: 510});
     if (isVisible(box.titleWrap)) {
       box.setBackTitle(false);
     }
@@ -620,7 +620,7 @@ var MoneyTransfer = {
       removeClass('payments_iframe_container', 'payments_threeds_frame');
     }
     if (!skipContHeight) {
-      ge('payments_iframe_container').style.height = (height ? height : cur.prevFrameHeight) + 10 + 'px';
+      ge('payments_iframe_container').style.height = (height ? height : cur.prevFrameHeight) + 15 + 'px';
     }
     ge('payments_iframe_container').scrollTop = 0;
   },
@@ -648,7 +648,7 @@ var MoneyTransfer = {
     var iframe = ce('iframe', {id: 'transfer_iframe', name: 'transfer_iframe'}, {
       border: 0,
       height: '445px',
-      width: (480 - sbWidth()) + 'px',
+      width: '510px',
       overflowX: 'hidden',
       overflowY: 'hidden'
     });

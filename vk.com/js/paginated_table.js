@@ -1611,7 +1611,9 @@ window.PaginatedTable.prototype._constructFooter = function() {
         var index1 = Number(arguments[0]);
         var index2 = Number(arguments[1]);
         var ctr = (Number(content.footer_raw_values[index1]) / Number(content.footer_raw_values[index2])) * 100;
-        if (isNaN(ctr)) ctr = 0;
+        if (isNaN(ctr) || !isFinite(ctr)) {
+          ctr = 0;
+        }
         text = ctr.toFixed(PERCENT_FORMAT_PRECISION);
         break;
       case 'average':
@@ -1631,6 +1633,18 @@ window.PaginatedTable.prototype._constructFooter = function() {
         break;
       case 'label':
         text = getLang('ads_paginated_table_footer_total').replace('{total}', content.data.length);
+        break;
+      case 'division':
+        var index1 = Number(arguments[0]);
+        var index2 = Number(arguments[1]);
+        var quotient;
+        if (index1 && index2) {
+          quotient = (Number(content.footer_raw_values[index1]) / Number(content.footer_raw_values[index2]));
+        }
+        if (isNaN(quotient) || !isFinite(quotient)) {
+          quotient = 0;
+        }
+        text = quotient.toFixed(AVG_PRECISION);
         break;
       default:
         text = formula;
@@ -1873,7 +1887,7 @@ window.PaginatedTable.prototype._formatData = function(data, format, rown, coln)
       return this._formatData(s.substring(0, tn), 'delim_int') + tail;
 
     case 'percent_float':
-      if (isNaN(data) || data == Infinity) {
+      if (isNaN(data) || !isFinite(data)) {
         data = 0;
       }
       s = data.toString().replace(',', '.');
@@ -1881,7 +1895,7 @@ window.PaginatedTable.prototype._formatData = function(data, format, rown, coln)
       return s + '&nbsp;%';
 
     case 'percent_float1':
-      if (isNaN(data) || data == Infinity) {
+      if (isNaN(data) || !isFinite(data)) {
         data = 0;
       }
       s = data.toString().replace(',', '.');
