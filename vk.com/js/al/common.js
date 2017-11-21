@@ -2165,6 +2165,8 @@ var layers = {
       clayer = ['video', mvcur.videoRaw, mvcur.listId, opts];
     } else if (window.wkcur && wkcur.shown) {
       clayer = ['wiki', wkcur.wkRaw, false, {toScroll: wkLayerWrap.scrollTop, prevLoc: wkcur.prevLoc, myLoc: wkcur.myLoc}];
+    } else if (cur.storyLayer) {
+      clayer = ['stories', cur.storyLayer.getList()];
     } else {
       return false;
     }
@@ -2215,6 +2217,8 @@ var layers = {
       showVideo(last[1], last[2], last[3], false);
     } else if (last[0] == 'wiki') {
       showWiki({w: last[1]}, false, false, last[3]);
+    } else if (last[0] == 'stories') {
+      showStory(last[1]);
     }
   },
   back: function(type, id, type2, id2) {
@@ -4727,7 +4731,7 @@ function handlePageParams(params) {
     ads_menu_link = 'ads?act=office&last=1';
   }
 
-  var i = 0, setEl = ge('l_set'), sep = setEl && setEl.nextSibling || false, sh = false, ids = ['fr', 'ph', 'vid', 'msg', 'nts', 'gr', 'ev', 'wsh', 'ap', 'ads', 'ntf', 'fav', 'doc', 'apm', 'mk'];
+  var i = 0, setEl = ge('l_set'), sep = setEl && setEl.nextSibling || false, sh = false, ids = ['fr', 'ph', 'vid', 'msg', 'nts', 'gr', 'vkp', 'wsh', 'ap', 'ads', 'ntf', 'fav', 'doc', 'apm', 'mk'];
   var lnks = ['friends', 'albums' + vk.id, 'video', '', 'notes', 'groups', 'events', 'gifts.php?act=wishlist', 'apps', ads_menu_link, 'feed' + (ge('l_nwsf') ? '?section=notifications' : ''), 'pages', 'docs', 'apps_manage', 'market'];
   var adds = ['', 'act=added', 'section=tagged', '', 'act=comments', '', 'tab=invitations', '', '', ads_menu_add, ge('l_nwsf') ? '' : 'section=notifications', '', '', '', 'only_friends=1'];
 
@@ -7615,6 +7619,8 @@ function zNav(changed, opts, fin) {
   if (w) {
     if (z === false) {
       layers.fullhide(opts.hist ? 2 : false);
+    } else if (w.match(/^story([0-9\-]+)_(\d+)/)) {
+      return showStory(w);
     } else {
       if (!fin) fin = clone(nav.objLoc);
       if (w) fin.w = w;
@@ -11759,5 +11765,35 @@ function toggleAudioLyrics(event, ref, audioId, lyricsId) {
   return false
 }
 /* END OF AUDIOS FUNCTIONS */
+
+function showStory(list, opts) {
+  if (cur.storiesNotSupported) {
+    return showFastBox(getLang('global_error'), getLang('stories_bad_browser'))
+  }
+  opts = opts || {};
+  delete cur.storiesLastSnippetId;
+
+  clearTimeout(cur.storiesStaticLoadTimer);
+  cur.storiesStaticLoadTimer = setTimeout(function() {
+    bodyNode.appendChild(ce('div', {
+      id: 'stories_loader',
+      innerHTML: getProgressHtml('stories_loader_pr', 'pr_baw pr_medium') + '<div class="back"></div>'
+    }));
+  }, 1000);
+
+  stManager.add(['stories.js', 'stories.css'], function() {
+    clearTimeout(cur.storiesStaticLoadTimer);
+    re('stories_loader');
+    Stories.show(list, opts);
+  });
+}
+
+function storiesPreloadStatic() {
+  if (cur.storiesPreloadStaticStart || cur.storiesNotSupported) {
+    return;
+  }
+  cur.storiesPreloadStaticStart = true;
+  stManager.add(['stories.js', 'stories.css']);
+}
 
 try{stManager.done('common.js');}catch(e){}

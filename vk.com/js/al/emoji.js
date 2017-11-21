@@ -1316,6 +1316,7 @@ addEmoji: function(optId, code, obj) {
   if (opts.saveDraft) {
     opts.saveDraft();
   }
+  opts.onEmojiAdded && opts.onEmojiAdded();
   Emoji.incrRecentEmojiRate(optId, code);
 },
 
