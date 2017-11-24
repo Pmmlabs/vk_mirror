@@ -1246,10 +1246,6 @@ if (!VK.Widgets) {
         post_id: postId,
         hash: hash || ''
       }, iframe, rpc, cursorBack;
-    if (options.preview) {
-      params.preview = 1;
-      delete options['preview'];
-    }
     return VK.Widgets._constructor('widget_post.php', objId, options, params, {
       showBox: function(url, props) {
         var box = VK.Util.Box(VK.Widgets.showBoxUrl(options.base_domain, url), [], {
@@ -2312,6 +2308,11 @@ if (!VK.Widgets) {
     options = options || {};
     defaults = defaults || {};
     funcs = funcs || {};
+
+    if (options.preview) {
+      params.preview = 1;
+      delete options['preview'];
+    }
 
     var ifr, url, urlQueryString, encodedParam, rpc, iframe, i,
       base_domain = options.base_domain || VK._protocol + '//vk.com',
