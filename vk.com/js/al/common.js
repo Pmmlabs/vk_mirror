@@ -3047,6 +3047,7 @@ function domStarted() {
   }
 
   addEvent(boxLayerWrap, 'click', __bq.hideLastCheck);
+  window.LazyLoad && LazyLoad.watch(boxLayerWrap)
 
   extend(layers, {
     show: layers._show.pbind(l, lw),
@@ -4004,6 +4005,8 @@ var ajax = {
         break;
       }
       if (window._updateDebug) _updateDebug();
+
+      window.LazyLoad && LazyLoad.scanDelayed()
     }
     if (o.local) processResponse = vkLocal(processResponse);
     var done = function(text, data) { // data - for iframe transport post
@@ -5227,6 +5230,7 @@ var nav = {
       updateLeftMenu();
       updateAriaElements();
       TopSearch.clear();
+      window.LazyLoad && LazyLoad.scanDelayed()
 
       handlePageParams(params);
 
