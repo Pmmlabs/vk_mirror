@@ -85,7 +85,8 @@ var mobPlatforms = {1:1,2:1,3:1,4:1,5:1,8:1};
 var browserFeatures = {
   // Detect wheel event
   wheelEvent: 'onwheel' in ce('div') ? 'wheel' : (document.onmousewheel !== void 0 ? 'mousewheel' : (browser.mozilla ? 'MozMousePixelScroll' : 'DOMMouseScroll')),
-  hasBoundingClientRect: 'getBoundingClientRect' in ce('div')
+  hasBoundingClientRect: 'getBoundingClientRect' in ce('div'),
+  cmaEnabled: navigator.credentials && navigator.credentials.preventSilentAccess && vk.cma
 };
 
 (function() {
@@ -7101,8 +7102,9 @@ function sureDeleteAll(title, text, where, objectId, toId, fromId, hash, event) 
 
 window.__qlTimer = null;
 window.__qlClear = function() { clearTimeout(__qlTimer); setTimeout(function() { clearTimeout(__qlTimer); }, 2000); }
-window.onLoginDone = function () {
+window.onLoginDone = function(userUrl, userData) {
   __qlClear();
+  storePasswordCredential(userData);
   nav.reload({force: true, from: 6});
 }
 window.onLogout = function() {
@@ -7145,6 +7147,18 @@ function onLoginReCaptcha(key, lang) {
     ge('quick_recaptcha').value = response;
     ge('quick_login_form').submit();
   }, onHide: function() { window.qloginBox = false; }});
+}
+
+function storePasswordCredential(params) {
+  if (!browserFeatures.cmaEnabled) return;
+
+  var cred = new PasswordCredential({
+    id: ge('quick_email').value,
+    password: ge('quick_pass').value,
+    name: params.name,
+    iconURL: params.photo_50
+  });
+  navigator.credentials.store(cred);
 }
 
 function callHub(func, count) {
