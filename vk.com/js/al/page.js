@@ -2828,6 +2828,18 @@ var Wall = {
     checkbox('status_export', !isAnon && !isChecked(el));
     checkbox('facebook_export', !isAnon && !isChecked(el));
   },
+  needCheckSign: function() {
+    var el = ge('check_sign');
+    return el && isChecked(el);
+  },
+  saveCheckSign: function(el) {
+    var checked = isChecked(el);
+    domData(el, 'title', checked ? getLang('wall_check_sign_disabled') : getLang('wall_check_sign_enabled'));
+    if (window.tooltips) tooltips.hide(el, {
+      onHide: el.onmouseover.bind(el)
+    });
+    checkbox(el, !checked);
+  },
   sendPost: function(skipLocked) {
     var addmedia = cur.wallAddMedia || {},
         media = addmedia.chosenMedia || {},
@@ -2844,6 +2856,7 @@ var Wall = {
       to_id: cur.postTo,
       type: pType,
       friends_only: !isAnon && isChecked('friends_only'),
+      check_sign: Wall.needCheckSign(),
       status_export: !isAnon && isChecked('status_export'),
       facebook_export: !isAnon && ge('facebook_export') ? (isChecked('facebook_export') ? 1 : 0) : '',
       official: (domData(domClosest('_submit_post_box', ge('official')), 'from-oid') == cur.postTo) ? 1 : '',
