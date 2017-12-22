@@ -979,19 +979,28 @@ AdsModer.increaseBudget = function() {
   }
 }
 
-AdsModer.openDisableOfficeBox = function(ajaxParams, isCompany) {
-  cur.lang.ads_disable_office_box_title               = '«акрытие рекламного кабинета';
-  cur.lang.ads_disable_office_box_button              = '«акрыть кабинет';
-  cur.lang.ads_disable_office_confirm_message         = '¬ы уверены что хотите закрыть рекламный кабинет?<br><br>ѕосле закрыти€ кабинета останетс€ доступ к статистике, но любые активные действи€ будут невозможны.';
-  cur.lang.ads_disable_office_company_confirm_message = '“олько после закрыти€ текущего кабинета компани€ сможет выставл€ть счета в новом кабинете.';
-  cur.lang.ads_disable_office_reason_label            = '”кажите причину закрыти€ кабинета:';
+AdsModer.openDisableOfficeBox = function(ajaxParams, isCompleteCompany, companyName, companyClearFields) {
+  cur.lang.ads_disable_office_box_title                    = '«акрытие рекламного кабинета';
+  cur.lang.ads_disable_office_box_button                   = '«акрыть кабинет';
+  cur.lang.ads_disable_office_confirm_message              = '¬ы уверены что хотите <b>закрыть</b> рекламный кабинет?<br><br>ѕосле закрыти€ кабинета останетс€ доступ к статистике, но любые <b>активные действи€ будут невозможны</b>.';
+  cur.lang.ads_disable_office_company_info_message         = '  текущему кабинету прикреплена компани€.<br>Ќаименование: <b>{company_name}</b><br><br>“олько после закрыти€ текущего кабинета компани€ сможет выставл€ть счета в новом кабинете.';
+  cur.lang.ads_disable_office_company_clear_fields_message = 'ѕри закрытии кабинета следующие пол€ будут <b>обнулены</b>.';
+  cur.lang.ads_disable_office_reason_label                 = '”кажите причину закрыти€ кабинета:';
 
   var boxHtml = '';
-  boxHtml += getLang('ads_disable_office_confirm_message')
-  if (isCompany) {
-    boxHtml += '<br><br>' + getLang('ads_disable_office_company_confirm_message');
+  boxHtml += getLang('ads_disable_office_confirm_message') + '<br><br>';
+  if (isCompleteCompany) {
+    boxHtml += getLang('ads_disable_office_company_info_message').replace('{company_name}', companyName) + '<br><br>';
+    if (companyClearFields && companyClearFields.length) {
+      boxHtml += getLang('ads_disable_office_company_clear_fields_message') + '<br>';
+      for (var i in companyClearFields) {
+        var companyClearField = companyClearFields[i];
+        boxHtml += companyClearField[0] + ' <b>' + companyClearField[1] + '</b><br>';
+      }
+      boxHtml += '<br>';
+    }
   }
-  boxHtml += '<br><br>' + getLang('ads_disable_office_reason_label');
+  boxHtml += getLang('ads_disable_office_reason_label');
   boxHtml += '<div class="ads_note_edit_wrap"><div><textarea id="ads_note_edit"></textarea></div></div>';
 
   var box = showFastBox(getLang('ads_disable_office_box_title'), boxHtml, getLang('ads_disable_office_box_button'), function() { AdsModer.disableOffice(box, ajaxParams); }, getLang('box_cancel'));
