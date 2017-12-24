@@ -1810,6 +1810,7 @@ AdsViewEditor.prototype.initPreview = function(paramName) {
   this.preview.disclaimer_finance     = geByClass1('ads_ad_disclaimer_finance', this.preview.layout);
   this.preview.disclaimers_photo      = geByClass1('ads_ad_disclaimers_photo', this.preview.layout);
   this.preview.disclaimers_bottom     = geByClass1('ads_ad_disclaimers_bottom', this.preview.layout);
+  this.preview.disclaimers_promoted_post = geByClass1('ads_ad_disclaimers_promoted_post', this.preview.layout);
   this.preview.disclaimers            = geByClass1('ads_ad_disclaimers', this.preview.layout);
   this.preview.age_restriction        = geByClass1('ads_ad_age_restriction', this.preview.layout);
   this.preview.domain                 = geByClass1('ads_ad_domain', this.preview.layout);
@@ -4528,21 +4529,22 @@ AdsViewEditor.prototype.completeLink = function() {
       }
     }
 
-    var oldGroupId = false;
-    if (this.params_old && inArray(this.params_old.link_type.value, AdsEdit.ADS_AD_LINK_TYPES_ALL_GROUP)) {
-      oldGroupId = this.params_old.link_id.value;
-    } else if (this.params_old && inArray(this.params_old.link_type.value, AdsEdit.ADS_AD_LINK_TYPES_ALL_POST)) {
-      oldGroupId = -this.params_old.link_owner_id.value;
-    }
-    if (!this.targetingEditor.criteria.groups_not.value || oldGroupId == this.targetingEditor.criteria.groups_not.value) {
-      var selectedValue = false;
-      if (inArray(this.params.link_type.value, AdsEdit.ADS_AD_LINK_TYPES_ALL_GROUP)) {
-        selectedValue = this.params.link_id.value;
-      } else if (inArray(this.params.link_type.value, AdsEdit.ADS_AD_LINK_TYPES_ALL_POST)) {
-        selectedValue = -this.params.link_owner_id.value;
+    if (!this.params.ad_id.is_copy) {
+      var oldGroupId = false;
+      if (this.params_old && inArray(this.params_old.link_type.value, AdsEdit.ADS_AD_LINK_TYPES_ALL_GROUP)) {
+        oldGroupId = this.params_old.link_id.value;
+      } else if (this.params_old && inArray(this.params_old.link_type.value, AdsEdit.ADS_AD_LINK_TYPES_ALL_POST)) {
+        oldGroupId = -this.params_old.link_owner_id.value;
       }
-
-      this.targetingEditor.setAutoGroupsNotValue(selectedValue);
+      if (!this.targetingEditor.criteria.groups_not.value || oldGroupId == this.targetingEditor.criteria.groups_not.value) {
+        var selectedValue = false;
+        if (inArray(this.params.link_type.value, AdsEdit.ADS_AD_LINK_TYPES_ALL_GROUP)) {
+          selectedValue = this.params.link_id.value;
+        } else if (inArray(this.params.link_type.value, AdsEdit.ADS_AD_LINK_TYPES_ALL_POST)) {
+          selectedValue = -this.params.link_owner_id.value;
+        }
+        this.targetingEditor.setAutoGroupsNotValue(selectedValue);
+      }
     }
 
     this.updateUiParam('platform');
@@ -4827,7 +4829,7 @@ AdsViewEditor.prototype.updatePreview = function(previewParamName) {
       //var photoBoxPlaceElem    = ((isAppInNews || isAppsOnly || isGroupsOnly) ? this.preview.photo_box_hor : this.preview.photo_box_ver);
       var photoBoxPlaceElem    = this.preview.photo_box_hor; // Redesign styles
       var domainPlaceElem      = ((isAppInNews || isAppsOnly || isGroupsOnly) ? this.preview.domain_out    : this.preview.domain_ver);
-      var disclaimersPlaceElem = (isGroupsOnly ? this.preview.disclaimers_photo : this.preview.disclaimers_bottom);
+      var disclaimersPlaceElem = (isPromotedPost ? this.preview.disclaimers_promoted_post : (isGroupsOnly ? this.preview.disclaimers_photo : this.preview.disclaimers_bottom));
       titlePlaceElem.parentNode.insertBefore(this.preview.title_box, titlePlaceElem);
       descriptionPlaceElem.parentNode.insertBefore(this.preview.description, descriptionPlaceElem);
       photoBoxPlaceElem.parentNode.insertBefore(this.preview.photo_box, photoBoxPlaceElem);

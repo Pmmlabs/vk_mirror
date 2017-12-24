@@ -9,7 +9,7 @@ last: 0,
 shownId: false,
 hasNewStickers: false,
 preventMouseOver: false,
-
+stickerPacksToLoad: [],
 ttShift: 45,
 
 stickers: {},
@@ -987,22 +987,29 @@ checkStickersKeywords: function(optId, opts, force) {
           stickerSize = (window.devicePixelRatio >= 2) ? '128' : '64', html = '';
 
       var promotedStickers = Emoji.stickers[-1].promoted;
-
       each(stickers, function() {
         var stickerId = Math.abs(this);
         var stickerUrl = promotedStickers[stickerId] ? promotedStickers[stickerId][2] : window.promotedStickerUrls && window.promotedStickerUrls[stickerId];
-        if (stickerUrl) {
-          html += rs(Emoji.hintsStickerItem(), {
-            optId: optId,
-            selId: 0,
-            stickerId: stickerId,
-            stickerUrl: stickerUrl,
-            class: (this < 0 ? 'promo' : ''),
-            onclick: 'Emoji.stickerHintClick(' + optId + ', ' + this + ', \'' + stickerUrl + '\'' + ', this)',
-            stickerSize: stickerSize
-          });
+        var animationUrl = promotedStickers[stickerId] ? promotedStickers[stickerId][3] : '';
+        var tempOpts = {
+          optId: optId,
+          selId: 0,
+          stickerId: stickerId,
+          stickerUrl: stickerUrl,
+          class: (this < 0 ? 'promo' : ''),
+          onclick: 'Emoji.stickerHintClick(' + optId + ', ' + this + ', \'' + stickerUrl + '\'' + ', this)',
+          stickerSize: stickerSize
+        };
+        var rsTemplate = '';
+        if (!browser.msie && animationUrl && stickerUrl) {
+          rsTemplate = Emoji.hintsStickerItemAnimation();
+          var m = rand(1, 100000);
+          tempOpts.animationUrl = animationUrl;
+          tempOpts.class += ' sticker_animation';
+        } else if (stickerUrl) {
+          rsTemplate = Emoji.hintsStickerItem();
         }
-
+        html += rs(rsTemplate, tempOpts);
       });
       Emoji.showStickersHints(stCont, opts, html);
     } else {
@@ -1100,16 +1107,18 @@ onWheelStickersHints: function(inner, ev) {
 },
 
 sortStickersHints: function(el, stickers) {
-  var recent = (Emoji.stickers[-1] || {}).stickers || [],
-      result = [], added = {};
-
+  var recent = [];
+  if (Emoji.stickers[-1]) {
+    recent = Emoji.stickers[-1].stickers;
+  }
+  var added = {};
+  var result = [];
   each(recent, function() {
-    if (inArray(this[0], stickers)) {
+    if (inArray(this[0], stickers) && !added[this[0]]) {
       result.push(this[0]);
       added[this[0]] = 1;
     }
   });
-
   each(stickers, function() {
     if (!added[this]) {
       result.push(this);
@@ -1676,39 +1685,19 @@ emojiLoadMore: function(optId) {
   opts.emojiMoreSt = 1;
 
   var params = {act: 'get_emoji_list'};
+  if (Emoji.stickerPacksToLoad) {
+    params.sticker_packs_to_load = Emoji.stickerPacksToLoad.join(',');
+  }
   if (Emoji.hasNewStickers < 0) params.new_shown = 1;
   ajax.post('al_im.php', params, {
-    onDone: function(stickers, recent_emoji) {
-      Emoji.stickers = stickers;
-      opts.emojiMoreSt = 0;
-
-      if (Emoji.stickers[-1]) {
-        ls.set('recent_stickers', Emoji.stickers[-1]);
-        Emoji.updateRecentEmoji(optId);
-      }
-      opts.allEmojiId = 0;
-      if (opts.sharedTT) {
-        opts.sharedTT.emojiAllId = 0;
-      }
-
-      if (Emoji.onStickersLoad) {
-        opts.afterLoad = 1;
-      }
-
-      if (Emoji.onStickersLoad && window.emojiStickers) {
-        Emoji.onStickersLoad();
-        Emoji.onStickersLoad = false;
-      }
-
-      var emojiList = Emoji.emojiGetRecentFromStorage();
-      if (!emojiList) {
-        Emoji.emojiOldRecentPrepare(recent_emoji, optId);
-        Emoji.updateEmojiCont(optId);
+    onDone: function(stickers, recent_emoji, hasAnimations) {
+      if (hasAnimations) {
+        stManager.add([jsc('web/stickers.js')], function() {
+          Emoji.updateEmojiList(stickers, recent_emoji, optId, opts);
+        });
       } else {
-        Emoji.curEmojiRecent = Emoji.filterEmoji(emojiList);
+        Emoji.updateEmojiList(stickers, recent_emoji, optId, opts);
       }
-      Emoji.updateRecentEmoji(optId);
-      opts.onRecentEmojiUpdate && opts.onRecentEmojiUpdate();
     },
     onFail: function () {
       opts.emojiMoreSt = 0;
@@ -1718,6 +1707,38 @@ emojiLoadMore: function(optId) {
   if (Emoji.curEmojiRecent) {
     opts.onRecentEmojiUpdate && opts.onRecentEmojiUpdate();
   }
+},
+updateEmojiList: function(stickers, recent_emoji, optId, opts) {
+  Emoji.stickers = stickers;
+  opts.emojiMoreSt = 0;
+
+  if (Emoji.stickers[-1]) {
+    ls.set('recent_stickers', Emoji.stickers[-1]);
+    Emoji.updateRecentEmoji(optId);
+  }
+  opts.allEmojiId = 0;
+  if (opts.sharedTT) {
+    opts.sharedTT.emojiAllId = 0;
+  }
+
+  if (Emoji.onStickersLoad) {
+    opts.afterLoad = 1;
+  }
+
+  if (Emoji.onStickersLoad && window.emojiStickers) {
+    Emoji.onStickersLoad();
+    Emoji.onStickersLoad = false;
+  }
+
+  var emojiList = Emoji.emojiGetRecentFromStorage();
+  if (!emojiList) {
+    Emoji.emojiOldRecentPrepare(recent_emoji, optId);
+    Emoji.updateEmojiCont(optId);
+  } else {
+    Emoji.curEmojiRecent = Emoji.filterEmoji(emojiList);
+  }
+  Emoji.updateRecentEmoji(optId);
+  opts.onRecentEmojiUpdate && opts.onRecentEmojiUpdate();
 },
 
 filterEmoji: function (emoji_list) {
@@ -1983,14 +2004,24 @@ updateRecentStickers: function (optId) {
   var stickerSize = (window.devicePixelRatio >= 2) ? '128' : '64';
   var stickers = Emoji.stickers[-1].stickers;
   for(var i = 0; i < stickers.length; i++) {
-    var stickerEl = se(rs(Emoji.stickerItem(), {
+    var tempOpts = {
       optId: optId,
       selId: Emoji.TAB_RECENT_STICKERS,
       stickerId: stickers[i][0],
       size: stickers[i][1] ? stickers[i][1] : 256,
       stickerSize: stickerSize,
       stickerUrl: stickers[i][2]
-    }));
+    };
+    var rsHtml = '';
+    if (!browser.msie && stickers[i][3]) {
+      rsHtml = Emoji.stickerItemAnimation();
+      var m = rand(1, 100000);
+      tempOpts.animationUrl = stickers[i][3];
+      tempOpts.uniqId = m;
+    } else {
+      rsHtml = Emoji.stickerItem();
+    }
+    var stickerEl = se(rs(rsHtml, tempOpts));
     recentWrap.appendChild(stickerEl);
     var top = Math.ceil((i +1) / 4) * 68;
     opts.needLoadStickers.unshift([optId + '_' + Emoji.TAB_RECENT_STICKERS + '_' + stickers[i][0], top]);
@@ -2259,7 +2290,6 @@ updateShownStickers: function(optId, noChangeTab) {
   var needLoad = opts.needLoadStickers;
 
   clearTimeout(opts.preloadStickersTimer);
-
   var need_load = [];
   for (var i = 0; i < needLoad.length; i++) {
     var item = needLoad[i];
@@ -2269,8 +2299,20 @@ updateShownStickers: function(optId, noChangeTab) {
       if (!el) {
         continue;
       }
+      var animationPath = attr(el, 'data-animation-path');
       var src = attr(el, 'data-src');
-      val(el, '<img class="emoji_sticker_image" src="/images/blank.gif" data-src="' + src + '"/>');
+      if (animationPath) {
+        var stickerId = attr(el, 'data-sticker-id');
+        var uniqId = attr(el, 'data-uniq-id');
+        var div = "<div data-uniq-id='"+uniqId+"' onmouseenter='StickersAnimation.loadAndPlaySticker(this);'" +
+          " class='sticker_animation' data-sticker-id='" + stickerId + "' data-animation-path='" + animationPath + "'>" +
+          '<img class="sticker_img emoji_sticker_image" src="/images/blank.gif" data-src="' + src + '"/>' +
+          "</div>";
+        val(el, div);
+      } else {
+        val(el, '<img class="emoji_sticker_image" src="/images/blank.gif" data-src="' + src + '"/>');
+      }
+
       need_load.push([src, item[0]]);
     }
   }
@@ -2364,7 +2406,19 @@ preloadStickers: function (optId) {
 
         if (top >= before.top && top <= before.bottom || top >= after.top && top <= after.bottom) {
           var id = el.id.replace('emoji_sticker_item', ''), src = attr(el, 'data-src');
-          val(el, '<img class="emoji_sticker_image" src="/images/blank.gif" data-src="' + src + '"/>');
+          var animationPath = attr(el, 'data-animation-path');
+          var src = attr(el, 'data-src');
+          if (animationPath) {
+            var stickerId = attr(el, 'data-sticker-id');
+            var uniqId = attr(el, 'data-uniq-id');
+            var div = "<div data-uniq-id='"+uniqId+"' onmouseenter='StickersAnimation.loadAndPlaySticker(this);'" +
+              " class='sticker_animation' data-sticker-id='" + stickerId + "' data-animation-path='" + animationPath + "'>" +
+              '<img class="sticker_img emoji_sticker_image" src="/images/blank.gif" data-src="' + src + '"/>' +
+              "</div>";
+            val(el, div);
+          } else {
+            val(el, '<img class="emoji_sticker_image" src="/images/blank.gif" data-src="' + src + '"/>');
+          }
           needLoad.push([src, id]);
         }
       }
@@ -2728,14 +2782,24 @@ getTabCont: function(optId, selId) {
       }
       var list = pack.stickers;
       for (var i in list) {
-        packHtml += rs(Emoji.stickerItem(), {
+        var tempOpts = {
           optId: optId,
           selId: packId,
           stickerId: list[i][0],
           size: list[i][1] ? list[i][1] : 256,
           stickerSize: stickerSize,
           stickerUrl: list[i][2]
-        });
+        };
+        var rsTemplate = '';
+        if (!browser.msie && list[i][3]) {
+          rsTemplate = Emoji.stickerItemAnimation();
+          var m = rand(1, 100000);
+          tempOpts.uniqId = m;
+          tempOpts.animationUrl = list[i][3];
+        } else {
+          rsTemplate = Emoji.stickerItem();
+        }
+        packHtml += rs(rsTemplate, tempOpts);
       }
       if (packId == Emoji.TAB_RECENT_STICKERS) {
         recentHtml = packHtml + '</div>';
@@ -2787,8 +2851,13 @@ updateStickersCont: function(optId) {
 },
 
 stickerItem: function() {
-  // <img class="emoji_sticker_image emoji_need_load" src="/images/blank.gif" data-src="/images/stickers/%stickerId%/%stickerSize%.png" />
-  return '<a id="emoji_sticker_item%optId%_%selId%_%stickerId%" data-pack-id="%selId%" data-src="%stickerUrl%" class="emoji_sticker_item" onclick="Emoji.stickerClick(%optId%, %stickerId%, %size%, \'%stickerUrl%\', this, \'keyboard\');"></a>';
+  return '<a id="emoji_sticker_item%optId%_%selId%_%stickerId%" data-sticker-id="%stickerId%" data-pack-id="%selId%" data-src="%stickerUrl%" class="emoji_sticker_item" onclick="Emoji.stickerClick(%optId%, %stickerId%, %size%, \'%stickerUrl%\', this, \'keyboard\');"></a>';
+},
+stickerItemAnimation: function() {
+  return '<a id="emoji_sticker_item%optId%_%selId%_%stickerId%" data-uniq-id="%uniqId%" data-sticker-id="%stickerId%" data-pack-id="%selId%" data-src="/stickers.php?act=proxy_sticker&sticker_id=%stickerId%&size=%stickerSize%" data-animation-path="%animationUrl%" class="emoji_sticker_item" onclick="Emoji.stickerClick(%optId%, %stickerId%, %size%,  \'%stickerUrl%\', this, \'keyboard\');"></a>';
+},
+hintsStickerItemAnimation: function() {
+  return '<a id="emoji_sticker_item%optId%_%selId%_%stickerId%" data-pack-id="%selId%" class="emoji_sticker_item %class%" onclick="%onclick%" onmouseover="Emoji.stickerHintOver(this)" onmouseout="Emoji.stickerHintOut(this)" onmouseenter="StickersAnimation.loadAndPlaySticker(this);" data-animation-path="%animationUrl%" data-uniq-id="%uniqId%" data-sticker-id="%stickerId%"><img class="emoji_sticker_image sticker_img" src="%stickerUrl%"  /></a>';
 },
 hintsStickerItem: function() {
   return '<a id="emoji_sticker_item%optId%_%selId%_%stickerId%" data-pack-id="%selId%" class="emoji_sticker_item %class%" onclick="%onclick%" onmouseover="Emoji.stickerHintOver(this)" onmouseout="Emoji.stickerHintOut(this)"><img class="emoji_sticker_image" src="%stickerUrl%"  /></a>';
@@ -2976,9 +3045,8 @@ stickerClick: function(optId, stickerNum, width, stickerUrl, obj, sticker_referr
     ls.set('recent_stickers', Emoji.stickers[-1]);
     Emoji.updateRecentStickers(optId);
   }
-
   if (opts.onStickerSend) {
-    opts.onStickerSend(stickerNum, sticker_referrer);
+    opts.onStickerSend(stickerNum, sticker_referrer, 'animation');
   }
 
   Emoji.ttHide(optId, false, false, true);
@@ -3362,6 +3430,9 @@ getTabsCode: function(newStickers, optId) {
     }
 
     if (isActive || isForced) {
+      if (stNum > 0 && Emoji.stickerPacksToLoad.indexOf(stNum) === -1) {
+        Emoji.stickerPacksToLoad.push(stNum);
+      }
       var act = 'return Emoji.tabSwitch(this, '+stNum+', '+optId+');';
     } else {
       var act = 'return Emoji.previewSticker('+stNum+', false, {sticker_referrer: \'keyboard\'});';
@@ -3391,7 +3462,6 @@ updateTabs: function(newStickers, keywords, update) {
   if (newStickers && update && window.Notifier) {
     Notifier.lcSend('emoji', {act: 'updateTabs', newStickers: newStickers, keywords: keywords});
   }
-
   var needKeywords = 0;
   if (keywords === undefined) {
     Emoji.initStickersKeywords();
