@@ -7150,7 +7150,8 @@ function onLoginReCaptcha(key, lang) {
 }
 
 function storePasswordCredential(params) {
-  if (!browserFeatures.cmaEnabled) return;
+  if (!browserFeatures.cmaEnabled || !window.ResizeObserver) return;
+  // window.ResizeObserver from Chrome 64
 
   var cred = new PasswordCredential({
     id: ge('quick_email').value,
@@ -11823,6 +11824,15 @@ function storiesPreloadStatic() {
   }
   cur.storiesPreloadStaticStart = true;
   stManager.add(['stories.js', 'stories.css']);
+}
+
+function ny2018ReplaceText(text) {
+  if (!cur.ny2018Enabled) {
+    return text;
+  }
+  return text.replace(/(с новым годом|с наступающим)([\!]+)?(?=(\s|\,|\<br\>|$))?/i, (found) => {
+    return '<span class="ny2017_link" onClick="Ny2018.startFlapper(); return false;">' + found + '</span>';
+  });
 }
 
 debugLog('common js old')
