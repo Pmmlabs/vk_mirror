@@ -4258,13 +4258,41 @@ Ads.openRetargetingPriceListActionsTable = function(priceListItem, priceListItem
   addClass(priceListItemActionsBlock, "ads_retargeting_price_list_actions_opened");
 }
 
-Ads.showRetargetingPriceListEditBox = function(event, unionId, hash, priceListId) {
+Ads.showRetargetingPriceListEditBox = function(event, unionId, hash, priceListId, hashArchive) {
   event.preventDefault();
 
-  var box = Ads.showRetargetingGroupBox('price_list_edit', {'union_id': unionId, 'price_list_id': priceListId, 'hash': hash});
+  var box, deleteLink;
+
+  var onClickArchiveLinkCallback = function() {
+    Ads.retargetingPriceListEditBoxArchiveOnClick(unionId, hashArchive, priceListId, box);
+  };
+
+  box = Ads.showRetargetingGroupBox('price_list_edit', {'union_id': unionId, 'price_list_id': priceListId, 'hash': hash}, {onBeforeHide: function() {
+    if (deleteLink) {
+      deleteLink.removeEventListener('click', onClickArchiveLinkCallback);
+    }
+  }});
+
   box.removeButtons();
   box.addButton(getLang('global_save'), function() { Ads.saveRetargetingPriceList(unionId, hash, priceListId) }, '', false, 'ads_retargeting_box_price_list_save');
   box.addButton(getLang('global_cancel'), box.hide, 'gray', false, 'ads_retargeting_box_price_list_cancel');
+
+  if (!hashArchive) {
+    return;
+  }
+
+  var boxControlsText = getLang('ads_retargeting_price_list_delete');
+  box.setControlsText('<a id="ads_retargeting_box_price_list_delete">' + boxControlsText + '</a>');
+
+  deleteLink = ge('ads_retargeting_box_price_list_delete');
+
+  if (deleteLink) {
+    deleteLink.addEventListener('click', onClickArchiveLinkCallback);
+  }
+}
+
+Ads.retargetingPriceListEditBoxArchiveOnClick = function(unionId, hashArchive, priceListId, box) {
+  Ads.archiveRetargetingPriceList(unionId, hashArchive, priceListId, false, box);
 }
 
 Ads.saveRetargetingPriceListUnescape = function(str) {
@@ -4339,15 +4367,15 @@ Ads.saveRetargetingPriceList = function(unionId, hash, priceListId) {
   }
 }
 
-Ads.archiveRetargetingPriceList = function(event, unionId, hash, priceListId, confirm, box) {
-  event.preventDefault();
-
-  var clickElem = event.currentTarget;
-
-  if (isButtonLocked(clickElem)) {
-    return;
+Ads.archiveRetargetingPriceList = function(unionId, hash, priceListId, confirm, box) {
+  var buttonConfirm = ge('ads_retargeting_box_price_list_archive_confirm');
+  if (buttonConfirm) {
+    if (isButtonLocked(buttonConfirm)) {
+      return;
+    }
+    lockButton(buttonConfirm);
   }
-  lockButton(clickElem);
+
   box && box.showProgress();
 
   var ajaxParams = {
@@ -4363,7 +4391,10 @@ Ads.archiveRetargetingPriceList = function(event, unionId, hash, priceListId, co
     var newBox;
     var error;
 
-    unlockButton(clickElem);
+    if (buttonConfirm) {
+      unlockButton(buttonConfirm);
+    }
+
     box && box.hide();
 
     if (!isDone || !isObject(response)) {
@@ -4374,7 +4405,11 @@ Ads.archiveRetargetingPriceList = function(event, unionId, hash, priceListId, co
 
     if (response.confirm_required) {
       newBox = showFastBox(getLang('global_box_confirm_title'), response.confirm_message);
-      newBox.setButtons(response.confirm_action, Ads.archiveRetargetingPriceList.pbind(event, unionId, hash, priceListId, true, newBox), getLang('box_cancel'));
+
+      newBox.removeButtons();
+      newBox.addButton(response.confirm_action, function() { Ads.archiveRetargetingPriceList(unionId, hash, priceListId, true, newBox); }, '', false, 'ads_retargeting_box_price_list_archive_confirm');
+      newBox.addButton(getLang('box_cancel'), newBox.hide, 'gray');
+
       return;
     }
 
@@ -4389,6 +4424,11 @@ Ads.archiveRetargetingPriceList = function(event, unionId, hash, priceListId, co
     }
 
     if (response.ok) {
+      if (response.reload_url) {
+        nav.go(response.reload_url);
+        return;
+      }
+
       showFastBox('Done', (response.message || 'Done. Refresh the page.'));
       return;
     }
