@@ -115,8 +115,6 @@ var Subscribe = {
 
           showBox: Widgets.showBox(),
 
-          showCaptchaBox: Widgets.showCaptchaBox,
-
           showReCaptchaBox: Widgets.showReCaptchaBox,
 
           gotSession: function(autorzied, callback) {
