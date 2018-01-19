@@ -4786,7 +4786,7 @@ var Wall = {
     ajax.post('like.php', {act: 'a_do_' + (my ? 'un' : '') + 'like', 'object': like_obj, hash: hash, wall: 2, from: ref}, {
       onDone: Wall.likeFullUpdate.pbind(false, post_id)
     });
-    var count = val(ge('like_real_count_wall' + post_id) || countNode);
+    var count = val(countNode);
     Wall.likeUpdate(false, post_id, !my, intval(count) + (my ? -1 : 1));
     if (cur.onWallLike) {
       cur.onWallLike();
@@ -4806,7 +4806,7 @@ var Wall = {
     var post = wall.domPost(post_id),
         wrap = domByClass(post, '_like_wrap'),
         icon = domByClass(wrap, '_icon'),
-        count = val(ge('like_real_count_wall' + post_id) || domByClass(post, '_count')),
+        count = val(domByClass(post, '_count')),
         my = hasClass(icon, 'fw_like_icon') ? hasClass(icon, 'fw_my_like') : hasClass(wrap, 'my_like');
     Wall.likeUpdate(false, post_id, true, intval(count) + (my ? 0 : 1));
   },
@@ -6495,7 +6495,7 @@ var Wall = {
         return true;
       }
     });
-    var count = val(ge('like_real_count_wall' + post_id) || countEl);
+    var count = val(countEl);
     Wall.likeUpdate(el, post_id, !my, intval(count) + (my ? -1 : 1));
     if (cur.onWallLike) {
       cur.onWallLike();
