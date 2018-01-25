@@ -1694,6 +1694,7 @@ AdsViewEditor.prototype.init = function(options, editor, targetingEditor, params
     cost_per_click:             {value: '', edited: false, last_value: ''},
     platform:                   {value: 0, data: [], data_all: [], values_normal: 0, values_disabled: 0},
     platform_no_wall:           {value: 0},
+    platform_no_ad_network:     {value: 0},
     view_retargeting_group_id:  {value: 0, data: []},
     views_limit_flag:           {value: 0},
     views_limit_exact:          {value: 0, data: [], default_values: [], data_ranges: []},
@@ -1918,6 +1919,7 @@ AdsViewEditor.prototype.initHelpParam = function(paramNameHelp) {
       AdsEdit.initHelpTooltipTarget(targetElem, handler, this.cur);
       break;
     case 'platform_no_wall':
+    case 'platform_no_ad_network':
       targetElem = ge(this.options.targetIdPrefix + paramNameHelp).parentNode;
       var showTooltip = function() { AdsEdit.showHelpCriterionTooltip(paramNameHelp, targetElem, handler, this.help[paramNameHelp], helpText, shiftLeft, shiftTop, this.cur); }.bind(this);
       var hideTooltip = function() { AdsEdit.hideHelpTooltip(this.help[paramNameHelp].tt); }.bind(this);
@@ -2276,7 +2278,9 @@ AdsViewEditor.prototype.initUiParam = function(paramName) {
       this.params[paramName].ui.disable(this.params[paramName].disabled);
       this.cur.destroy.push(function(){ this.params[paramName].ui.destroy(); }.bind(this));
       break;
-    case 'platform_no_wall': // Be careful: value is inverted
+    // Be careful: values are inverted
+    case 'platform_no_wall':
+    case 'platform_no_ad_network':
       targetElem = ge(this.options.targetIdPrefix + paramName);
       this.params[paramName].ui = new Checkbox(targetElem, {
         label:    this.params[paramName].label_checkbox,
@@ -2973,6 +2977,7 @@ AdsViewEditor.prototype.updateUiParamVisibility = function(paramName) {
       toggleClass('ads_edit_ad_row_' + paramName, 'unshown', !!this.params[paramName].hidden);
       break;
     case 'platform_no_wall':
+    case 'platform_no_ad_network':
       this.initUiParam(paramName);
       toggleClass('ads_edit_ad_row_' + paramName, 'unshown', !!this.params[paramName].hidden);
       break;
@@ -3211,6 +3216,7 @@ AdsViewEditor.prototype.onParamUpdate = function(paramName, paramValue, forceDat
         this.updateUiParamVisibility('view_retargeting_group_id');
         this.updateUiParamVisibility('cost_type');
         this.updateUiParamVisibility('platform_no_wall');
+        this.updateUiParamVisibility('platform_no_ad_network');
         this.updateUiParamVisibility('views_limit_flag');
         this.updateUiParamVisibility('views_limit_exact');
         this.updatePreview('layout');
@@ -3267,6 +3273,7 @@ AdsViewEditor.prototype.onParamUpdate = function(paramName, paramValue, forceDat
         }
         this.params.platform.hidden = !!(!inArray(this.params.link_type.value, AdsEdit.ADS_AD_LINK_TYPES_ALL_POST) && (!this.params.platform.allow_web || !inArray(this.params.link_type.value, [AdsEdit.ADS_AD_LINK_TYPE_GROUP, AdsEdit.ADS_AD_LINK_TYPE_EVENT, AdsEdit.ADS_AD_LINK_TYPE_PUBLIC, AdsEdit.ADS_AD_LINK_TYPE_APP, AdsEdit.ADS_AD_LINK_TYPE_URL])));
         this.params.platform_no_wall.hidden = !!(!inArray(this.params.link_type.value, AdsEdit.ADS_AD_LINK_TYPES_ALL_POST) || !this.params.platform_no_wall.allow);
+        this.params.platform_no_ad_network.hidden = !!(!inArray(this.params.link_type.value, AdsEdit.ADS_AD_LINK_TYPES_ALL_POST) || !this.params.platform_no_ad_network.allow);
 
         this.updateUiParam('link_id');
         this.updateUiParam('link_url');
@@ -3543,6 +3550,9 @@ AdsViewEditor.prototype.onParamUpdate = function(paramName, paramValue, forceDat
         isUpdateNeeded = true;
         break;
       case 'platform_no_wall':
+        isUpdateNeeded = true;
+        break;
+      case 'platform_no_ad_network':
         isUpdateNeeded = true;
         break;
       case 'campaign_type':
@@ -4554,6 +4564,7 @@ AdsViewEditor.prototype.completeLink = function() {
     this.updateUiParamVisibility('description');
     this.updateUiParamVisibility('platform');
     this.updateUiParamVisibility('platform_no_wall');
+    this.updateUiParamVisibility('platform_no_ad_network');
 
     this.targetingEditor.updateUiCriterionVisibility('events_retargeting_groups');
     this.targetingEditor.eventsRetargetingGroupsUpdateRules('events_retargeting_groups');
