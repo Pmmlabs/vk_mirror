@@ -2724,6 +2724,10 @@ var Wall = {
     Wall.hideEditPostReply();
     addClass('submit_post_box', 'shown');
     cur.editing = 0;
+
+    if (isFunction(cur.onShowEditPost)) {
+      cur.onShowEditPost()
+    }
   },
 
   initComposer: function (input, options, callback) {
