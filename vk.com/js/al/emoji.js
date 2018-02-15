@@ -725,6 +725,11 @@ checkEditable: function(optId, obj, options) {
       var pt = geByClass1('emoji_smile_icon_promo', opts.controlsCont);
       var ph = ge('im_upload');
       var diff = sbWidth();
+
+      if (opts.ttWrap) {
+        diff += getSize(opts.ttWrap)[0] - (getXY(opts.emojiBtn)[0] - getXY(opts.ttWrap)[0]);
+      }
+
       setStyle(sm, vk.rtl ? {left: 1 + diff} : {right: 1 + diff});
       if (pt) {
         setStyle(pt, vk.rtl ? {left: 2 + diff} : {right: 2 + diff});
@@ -2124,7 +2129,9 @@ reappendEmoji: function(optId, tt) {
   var controls = opts.controlsCont;
   // var diff = opts.isSized ? sbWidth() : 0;
 
-  if (opts.emojiWrap) { // new way
+  if (opts.ttWrap) {
+    opts.ttWrap.appendChild(tt);
+  } else if (opts.emojiWrap) { // new way
     opts.emojiWrap.appendChild(tt);
   } else {
     opts.obj.appendChild(tt);
@@ -2171,6 +2178,11 @@ ttCalcHeight: function(optId, obj, tt) {
   } else {
     toUp = (upSpace >= ttH);
   }
+
+  if (Emoji.opts[optId].forceUp) {
+    toUp = true
+  }
+
   space = (toUp ? upSpace : downSpace);
   while (space < ttH && rowsCnt > 3) {
     rowsCnt--;
@@ -2212,6 +2224,11 @@ repositionEmoji: function(optId, obj, tt) {
   Emoji.opts[optId].emojiSmileHeigh = firstSmile && Emoji.getSizeCached(firstSmile)[1] || 26;
   Emoji.opts[optId].emojiRowsCount = 9;
   Emoji.ttCalcHeight(optId, obj, tt);
+
+  if (opts.ttWrap) {
+    var diff = getSize(opts.ttWrap)[0] - (getXY(opts.emojiBtn)[0] - getXY(opts.ttWrap)[0]);
+    setStyle(tt, 'right', (diff - opts.ttDiff) + 'px');
+  }
 },
 emojiOver: function(optId, obj, withMouse) {
   if (browser.mobile || withMouse && Emoji.preventMouseOver) {
@@ -3630,6 +3647,14 @@ getSizeCached: function (el) {
   }
 
   return [el[Emoji.CACHED_WIDTH_PROP], el[Emoji.CACHED_HEIGHT_PROP]];
+},
+
+clearSizeCached: function (el) {
+  el = ge(el);
+  if (el) {
+    el[Emoji.CACHED_WIDTH_PROP] = undefined;
+    el[Emoji.CACHED_HEIGHT_PROP] = undefined;
+  }
 },
 
 __eof: 1}}
