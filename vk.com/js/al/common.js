@@ -7599,7 +7599,7 @@ function articleNav(strLoc, oldLoc, isBack, postId) {
   return false
 }
 function articlePrepare(articleUrl) {
-  if (!articleUrl) {
+  if (!articleUrl || vk.isBanned) {
     return
   }
 
