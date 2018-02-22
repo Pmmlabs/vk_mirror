@@ -1002,7 +1002,7 @@ var MoneyTransfer = {
     domReplaceEl(btn, newBtn);
   },
 
-  initHistoryBox: function(oid, request_id, from_offset) {
+  initHistoryBox: function(oid, request_id, from_offset, hash) {
     var btn = ge('ui_money_transfer_load_more');
     if (btn) {
       var tbl = ge('settings_transfer_history').tBodies[0];
@@ -1010,7 +1010,10 @@ var MoneyTransfer = {
         offset: from_offset,
         onNoMore: re.pbind(btn),
         onNeedRows: function(cb, offset) {
-          ajax.post('al_payments.php', { act: 'money_transfer_history_box', offset: offset, owner_id: oid, request_id: request_id }, {
+          var params = { act: 'money_transfer_history_box', offset: offset, owner_id: oid };
+          if (request_id) params.request_id = request_id;
+          if (hash) params.hash = hash;
+          ajax.post('al_payments.php', params, {
             onDone: cb
           });
         },
