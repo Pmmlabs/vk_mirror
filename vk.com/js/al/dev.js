@@ -213,7 +213,7 @@ scrollCheck: function() {
       head = ge('dev_top_nav_wrap'), headH = getSize(head)[1], position, ml,
       bottom = ge('dev_footer_wrap'), bottomH = isVisible(bottom) ? getSize(bottom)[1] : 0,
       navPos = getXY(nav)[1], navH = getSize(nav)[1], navMT = intval(getStyle(nav, 'marginTop')),
-      page = ge('dev_page_wrap'), pageH = getSize(page)[1], navMB = navMT + 25,
+      page = ge('dev_page_wrap'), pageH = getSize(page)[1], navMB = navMT,
       tooBig = navH > pageH, navPB = Math.max(0, bottomH + st + wh - bodyNode.clientHeight - navMB),
       lastPos = (cur.filterLastPos === undefined) ? headH : cur.filterLastPos, lastSt = cur.lastSt || 0;
   if ((st > 0 || browser.msie) && !tooBig) {
