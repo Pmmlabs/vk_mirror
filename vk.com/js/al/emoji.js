@@ -1604,6 +1604,7 @@ ttClick: function(optId, obj, needHide, needShow, ev, tabKey) {
     Emoji.shownId = false;
     opts.ttShown = false;
     opts.emojiFocused = false;
+    opts.emojiOvered = false;
     cur.onMouseClick = false;
     removeEvent(document, 'keydown', Emoji.emojiMove);
     removeClass(obj, 'emoji_smile_on');
