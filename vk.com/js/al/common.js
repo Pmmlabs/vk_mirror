@@ -6338,6 +6338,10 @@ function MessageBox(options, dark) {
       emitter.once(ev, handler);
     },
 
+    updateBoxCoords: function() {
+      boxRefreshCoords(boxContainer);
+    },
+
     // Update box options
     setOptions: function(newOptions) {
       if (options.hideOnBGClick) {
