@@ -45,6 +45,7 @@ init: function(txt, opts) {
   opts.emojiWrap && data(opts.emojiWrap, 'optId', optId);
   txt.emojiId = optId;
   opts.lastLoadedEmojiCategoriesIdxes = {};
+  opts.preventDoubleClick = vkNow();
   if (opts.forceTxt) {
     opts.editable = 0;
     // placeholderSetup(txt);
@@ -3126,6 +3127,12 @@ stickerClick: function(optId, stickerNum, width, stickerUrl, obj, sticker_referr
     return
   }
 
+  if (opts.preventDoubleClick) {
+    if (vkNow() - opts.preventDoubleClick < Emoji.CLICK_DELAY) {
+      return;
+    }
+  }
+  Emoji.opts[optId].preventDoubleClick = vkNow();
   var packId = parseInt(attr(obj, 'data-pack-id'));
 
   var addToRecent = true;
