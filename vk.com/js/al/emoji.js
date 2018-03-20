@@ -988,30 +988,71 @@ checkStickersKeywords: function(optId, opts, force) {
 
   var delay = force ? 0 : 100,
       text = opts.txt,
-      stCont = geByClass1('_sticker_hints', domPN(text)),
-      showHints = function() {
+      stCont = geByClass1('_sticker_hints', domPN(text));
+
+  // Show stickers hints block for text
+  var showStickers = function(str) {
+    if (!Emoji.stickers[Emoji.TAB_RECENT_STICKERS]) {
+      return;
+    }
+
+    var stickers = Emoji.sortStickersHints(text, stickersKeywords[str]);
+    var promotedStickers = Emoji.stickers[Emoji.TAB_RECENT_STICKERS].promoted;
+    var html = '';
+
+    each(stickers, function() {
+      var stickerId = this;
+      html += Emoji.render.stickerHintRs(optId, this, promotedStickers[stickerId]);
+    });
+
+    Emoji.showStickersHints(stCont, opts, html);
+  };
+
+  // Prepare stickers hints block and show if can and needed
+  var showHints = function() {
     var str = Emoji.getStickersHintsQuery(text);
+
     if (!stCont) {
       stCont = Emoji.initStickersHints(text);
       if (!stCont) {
         return false;
       }
     }
-    if (str == opts.stickerHintsString) return;
-    if (str && stickersKeywords[str] && stickersKeywords[str].length) {
-      var stickers = Emoji.sortStickersHints(text, stickersKeywords[str]), html = '';
 
-      var promotedStickers = Emoji.stickers[-1].promoted;
-      each(stickers, function() {
-        var stickerId = this;
-        html += Emoji.render.stickerHintRs(optId, this, promotedStickers[stickerId]);
-      });
-      Emoji.showStickersHints(stCont, opts, html);
+    if (str == opts.stickerHintsString) {
+      return;
+    }
+
+    if (str && stickersKeywords[str] && stickersKeywords[str].length) {
+      // Load available stickers if not there yet
+      if (!Emoji.stickers[Emoji.TAB_RECENT_STICKERS]) {
+        var _onRecentEmojiUpdate = opts.onRecentEmojiUpdate;
+
+        opts.onRecentEmojiUpdate = function(updated) {
+          if (_onRecentEmojiUpdate) {
+            _onRecentEmojiUpdate();
+          }
+
+          if (updated) {
+            if (_onRecentEmojiUpdate) {
+              opts.onRecentEmojiUpdate = _onRecentEmojiUpdate;
+            } else {
+              delete opts.onRecentEmojiUpdate;
+            }
+            showStickers(str);
+          }
+        }
+
+        Emoji.emojiLoadMore(optId);
+      } else {
+        showStickers(str);
+      }
     } else {
       Emoji.stickersHintsHide(stCont, opts, delay);
     }
     opts.stickerHintsString = str;
   }
+
   if (force) {
     showHints();
   } else {
@@ -1053,8 +1094,14 @@ checkStickersHintsScroll: function(el, newLeft) {
     newLeft = inner.scrollLeft;
   }
 
-  toggle(arrowLeft, newLeft > 0);
-  toggle(arrowRight, newLeft + inner.clientWidth < inner.scrollWidth);
+  var leftVisible = newLeft > 0;
+  var rightVisible = (newLeft + inner.clientWidth < inner.scrollWidth);
+
+  toggle(arrowLeft, leftVisible);
+  toggleClass(stCont, 'sticker_hints_left_pad', leftVisible);
+
+  toggle(arrowRight, rightVisible);
+  toggleClass(stCont, 'sticker_hints_right_pad', rightVisible);
 },
 
 scrollStickersHints: function(el, dir, ev) {
@@ -1650,7 +1697,7 @@ ttClick: function(optId, obj, needHide, needShow, ev, tabKey) {
       }
     }
     Emoji.tabSwitch(opts.curTab, opts.curTab, optId);
-    opts.onRecentEmojiUpdate && opts.onRecentEmojiUpdate();
+    opts.onRecentEmojiUpdate && opts.onRecentEmojiUpdate(true);
 
     if (opts.onShow) {
       opts.onShow();
@@ -1748,7 +1795,7 @@ updateEmojiList: function(stickers, recent_emoji, optId, opts) {
     Emoji.curEmojiRecent = Emoji.filterEmoji(emojiList);
   }
   Emoji.updateRecentEmoji(optId);
-  opts.onRecentEmojiUpdate && opts.onRecentEmojiUpdate();
+  opts.onRecentEmojiUpdate && opts.onRecentEmojiUpdate(true);
 },
 
 filterEmoji: function (emoji_list) {
@@ -2144,7 +2191,7 @@ favorite: {
     }
     Emoji.favorite.updateFavClass(optId, stickerId, 'off');
   },
-  deleteFavStickerContentId(optId, stickerId) {
+  deleteFavStickerContentId: function(optId, stickerId) {
     re('emoji_sticker_item' + optId + '_' + Emoji.TAB_FAVORITE_STICKERS + '_' + stickerId);
   },
   updateFavClass: function(optId, stickerId, status) {
@@ -3650,7 +3697,7 @@ updateTabs: function(newStickers, keywords, update) {
 
 checkNewStickers: function(opts)  {
   var txt = opts.txt;
-  if (!opts.noStickers && !opts.noStickersStore && window.emojiStickers && txt.getAttribute('contenteditable')) {
+  if (!opts.noStickers && !opts.noStickersStore && window.emojiStickers && txt && txt.getAttribute('contenteditable')) {
 
     for (var i in window.emojiStickers) {
       if (window.emojiStickers[i][2]) {

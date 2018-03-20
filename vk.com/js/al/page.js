@@ -637,6 +637,8 @@ var Page = {
       case 'feed_photos': return 'rp';
       case 'feed_photos_recent': return 'rp';
       case 'feed_photos_top': return 'tp';
+      case 'feed_list_recent': return 'rl';
+      case 'feed_list_top': return 'tl';
       case 'groups_ads_promoted_post': return 'ag';
       case 'public_ads_promoted_post': return 'ap';
       default: return 'u';
@@ -3636,6 +3638,7 @@ var Wall = {
     if (txt.emojiInited) {
       return false;
     }
+
     txt.emojiInited = true;
     stManager.add(['emoji.js', 'notifier.css'], function() {
       var optId = Emoji.init(txt, {
@@ -3651,7 +3654,13 @@ var Wall = {
           return Wall.customCur().wallTpl.reply_multiline || Wall.composerListShown(txt);
         },
         //sharedTT: cur.sharedIm,
-        checkEditable: Wall.checkTextLen.pbind(txt, 'reply_warn' + post),
+        checkEditable: function() {
+          if (cur.onReplyChanged) {
+            cur.onReplyChanged(txt, post);
+          }
+
+          Wall.checkTextLen(txt, 'reply_warn' + post);
+        },
         onStickerSend: function(stNum, sticker_referrer) {
           Wall.sendReply(post, false, {stickerId: stNum, sticker_referrer: sticker_referrer});
         },
@@ -3712,6 +3721,7 @@ var Wall = {
     if (cur.wallMyOpened) {
       cur.wallMyOpened[post] = cur.wallMyOpened[post] || false;
     }
+
     if (cur.editing === post) {
       Emoji.editableFocus(rf, false, true);
       return false;
@@ -4064,7 +4074,14 @@ var Wall = {
     }
 
     if (options.stickerId) {
-      var params = {message: '', attach1_type: "sticker", attach1: options.stickerId, sticker_referrer: options.sticker_referrer};
+      var params = {
+        message: '',
+        attach1_type: "sticker",
+        attach1: options.stickerId,
+        sticker_referrer: options.sticker_referrer
+      };
+    } else if (options.suggest) {
+      var params = { message: options.suggest };
     } else {
       var params = composer ? Composer.getSendParams(composer, Wall.sendReply.pbind(post)) : {message: trim(Emoji.editableVal(rf))};
       if (params.delayed) {
@@ -4120,7 +4137,7 @@ var Wall = {
           ref = 'feed_' + (cur.subsection ? cur.subsection : cur.section)
         } else if (cur.section == 'recommended') {
           ref = 'feed_recommended' + (cur.subsection != 'recent' ? ('_' + cur.subsection) : '')
-        } else if (cur.section == 'friends' || cur.section == 'groups' || cur.section == 'videos' || cur.section == 'photos') {
+        } else if (['friends', 'groups', 'videos', 'photos', 'list'].indexOf(cur.section) !== -1) {
           ref = 'feed_' + cur.section + (cur.subsection ? '_' + cur.subsection : '');
         } else {
           ref = 'feed_' + cur.section
@@ -4163,6 +4180,10 @@ var Wall = {
       showProgress: lockButton.pbind(ge('reply_button' + post)),
       hideProgress: unlockButton.pbind(ge('reply_button' + post))
     });
+
+    if (window.cur.onPostReply) {
+      window.cur.onPostReply(post);
+    }
 
     if (params.from_oid || !params.message) return;
 
@@ -6250,6 +6271,10 @@ var Wall = {
     if (hasClass(post, '_ads_promoted_post_data_w')) {
       Wall.triggerAdPostStat(post, 'load');
     }
+
+    if (cur.onPostLoaded) {
+      cur.onPostLoaded(post);
+    }
   },
 
   init: function(opts) {
@@ -6766,6 +6791,11 @@ var Wall = {
     });
     var count = stripHTML(val(countEl)).replace(/(\s|,)/g, '');
     Wall.likeUpdate(el, post_id, !my, intval(count) + (my ? -1 : 1));
+
+    if (like_type == 'wall' && window.cur.onPostLike) {
+      window.cur.onPostLike(el, post_id, my);
+    }
+
     if (cur.onWallLike) {
       cur.onWallLike();
     }
@@ -6775,6 +6805,10 @@ var Wall = {
     return false;
   },
   likesShow: function(el, post_id, opts) {
+    if (el.postDontShowLikes) {
+      return;
+    }
+
     opts = opts || {};
     var p = wall.parsePostId(post_id),
         like_type = p.type,
