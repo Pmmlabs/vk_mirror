@@ -46,6 +46,7 @@ init: function(txt, opts) {
   txt.emojiId = optId;
   opts.lastLoadedEmojiCategoriesIdxes = {};
   opts.preventDoubleClick = vkNow();
+  opts.shouldDeleteFavs = [];
   if (opts.forceTxt) {
     opts.editable = 0;
     // placeholderSetup(txt);
@@ -2115,6 +2116,12 @@ favorite: {
       removeClass(tabClass, 'unshown');
     }
     Emoji.favorite.updateFavClass(optId, stickerId, 'on');
+    if (Emoji.opts[optId].shouldDeleteFavs.length > 0) {
+      var positionInShouldDelete = indexOf(Emoji.opts[optId].shouldDeleteFavs, stickerId);
+      if (positionInShouldDelete !== -1) {
+        Emoji.opts[optId].shouldDeleteFavs.splice(positionInShouldDelete, 1);
+      }
+    }
   },
 
   deleteFavStickerId: function(optId, stickerId, el) {
@@ -2125,7 +2132,7 @@ favorite: {
     for (var i = 0; i < stickers.length; i++) {
       if (stickers[i][0] == stickerId) {
         Emoji.stickers[Emoji.TAB_FAVORITE_STICKERS].stickers.splice(i, 1);
-        re('emoji_sticker_item' + optId + '_' + Emoji.TAB_FAVORITE_STICKERS + '_' + stickerId);
+        Emoji.opts[optId].shouldDeleteFavs.push(stickerId)
       }
     }
     if (Emoji.stickers[Emoji.TAB_FAVORITE_STICKERS].stickers.length === 0) {
@@ -2136,6 +2143,9 @@ favorite: {
       }
     }
     Emoji.favorite.updateFavClass(optId, stickerId, 'off');
+  },
+  deleteFavStickerContentId(optId, stickerId) {
+    re('emoji_sticker_item' + optId + '_' + Emoji.TAB_FAVORITE_STICKERS + '_' + stickerId);
   },
   updateFavClass: function(optId, stickerId, status) {
     var elements = geByClass('sticker_item_' + stickerId);
@@ -2461,7 +2471,16 @@ updateShownStickers: function(optId, noChangeTab) {
       break;
     }
   }
-
+  if (packId != Emoji.TAB_FAVORITE_STICKERS) {
+    if (Emoji.opts[optId].shouldDeleteFavs.length > 0) {
+      setTimeout(function(){
+        for (var delId in opts.shouldDeleteFavs) {
+          Emoji.favorite.deleteFavStickerContentId(optId, opts.shouldDeleteFavs[delId])
+        }
+        Emoji.opts[optId].shouldDeleteFavs = [];
+      }, 500);
+    }
+  }
   if (opts.curTab != packId) {
     Emoji.scrollToTab(packId, optId);
   }
@@ -3772,8 +3791,8 @@ render: {
       size: stickerMeta[1] ? stickerMeta[1] : 256,
       stickerSize: Emoji.stickerSize,
       stickerUrl: stickerMeta[2],
-      fav: stickerMeta[4],
-      favHash: stickerMeta[5]
+      fav: stickerMeta[4] || '',
+      favHash: stickerMeta[5] || ''
     };
     var rsHtml = '';
     if ((!browser.msie || browser.msie_edge) && stickerMeta[3]) {
