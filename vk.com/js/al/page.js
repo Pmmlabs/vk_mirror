@@ -2431,7 +2431,9 @@ var Wall = {
 
     ajax.post('al_wall.php', {act: 'get_wall', owner_id: cur.oid, offset: offset, type: type, fixed: cur.options.fixed_post_id || '', wall_start_from: wallNextFrom}, {
       onDone: function (rows, names, videos, newNextFrom) {
-        if (tmp !== cur.oid) {
+        if (tmp !== cur.oid || type !== cur.wallType) {
+          delete(cur.wallLoading);
+          delete cur.wallTypeLoading[type];
           return;
         }
 
