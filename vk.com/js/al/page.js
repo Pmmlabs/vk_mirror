@@ -1928,7 +1928,9 @@ var Wall = {
         delete cur.wallTopFinished;
       }
 
-      Wall.showMore(0);
+      uiTabs.showProgress(el);
+
+      Wall.showMore(0, el);
     }
 
     return cancelEvent(ev);
@@ -2414,7 +2416,7 @@ var Wall = {
       getAudioPlayer().updateCurrentPlaying();
     }
   },
-  showMore: function(offset) {
+  showMore: function(offset, tabEl) {
     if (cur.viewAsBox) return cur.viewAsBox();
     if (cur.wallLayer) return;
     if (cur.wallTab == 'suggested') return Wall.suggestMore();
@@ -2431,6 +2433,8 @@ var Wall = {
 
     ajax.post('al_wall.php', {act: 'get_wall', owner_id: cur.oid, offset: offset, type: type, fixed: cur.options.fixed_post_id || '', wall_start_from: wallNextFrom}, {
       onDone: function (rows, names, videos, newNextFrom) {
+        tabEl && uiTabs.hideProgress(tabEl);
+
         if (tmp !== cur.oid || type !== cur.wallType) {
           delete(cur.wallLoading);
           delete cur.wallTypeLoading[type];
@@ -6558,6 +6562,12 @@ var Wall = {
       cur.destroy.push(clean);
     }
     Wall.updateMentionsIndex();
+
+    if (opts.top_wall_feature_tooltip) {
+      setTimeout(function() {
+        Wall.showTopWallTooltip(opts.top_wall_feature_tooltip_hash);
+      }, 800);
+    }
   },
   switchOwner: function(obj) {
     toggleClass(geByClass1('_ui_toggler', obj), 'on');
@@ -7174,7 +7184,34 @@ var Wall = {
         el.post_author_data_tt.show();
       }
     })
-  }
+  },
+
+  showTopWallTooltip: function(hash) {
+    if (cur.topWallFeatureTT) return;
+
+    var topWallTab = ge('page_wall_top');
+
+    if (topWallTab) {
+      cur.topWallFeatureTT = new ElementTooltip(geByClass1('ui_tab', topWallTab), {
+        content: '<div class="feature_tooltip__close" onclick="cur.topWallFeatureTT.hide();"></div>' + getLang('wall_top_feature_text'),
+        forceSide: 'top',
+        cls: 'feature_intro_tt feature_info_tooltip',
+        autoShow: false,
+        noHideOnClick: true,
+        noAutoHideOnWindowClick: true,
+        appendTo: domClosest('page_block', topWallTab),
+        onHide: function () {
+          ajax.post('al_index.php', {
+            act: 'hide_feature_tt',
+            hash: hash,
+            type: 'top_wall_web',
+          });
+        },
+      });
+
+      cur.topWallFeatureTT.show();
+    }
+  },
 }
 
 var wall = Wall;
