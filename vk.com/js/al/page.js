@@ -617,6 +617,7 @@ var Page = {
       case 'groups': return 'c';
       case 'profile': return 'p';
       case 'wall': return 'w';
+      case 'wall_top': return 'tw';
       case 'feed_search': return 's';
       case 'feed_news_recent': return 'rf';
       case 'feed_news': return 'rf';
@@ -904,6 +905,7 @@ var Page = {
         controlsCont: domPN(txt),
         noStickers: true,
         forceEnterSend: true,
+        ref: 'status',
         onSend: Page.infoSave,
         checkEditable: function() {
           var msg = Emoji.editableVal(txt), maxLen = 140;
@@ -1731,22 +1733,27 @@ var Wall = {
     }});
   },
   block: function(el, post, hash, bl, from) {
-    ajax.post('al_wall.php', {act: 'block', post: post, hash: hash, bl: bl, from: from}, {onDone: function(text) {
-      if (bl) {
-        domPN(el).insertBefore(ce('div', {innerHTML: text}), el);
-        hide(el);
-      } else {
-        show(domNS(domPN(el)));
-        re(domPN(el));
+    ajax.post('al_wall.php', {
+      act: 'block',
+      post: post,
+      hash: hash,
+      bl: bl,
+      from: from
+    }, {
+      onDone: function(text) {
+        if (bl) {
+          domPN(el).insertBefore(ce('span', {innerHTML: text}), el);
+          hide(el);
+        } else {
+          show(domNS(domPN(el)));
+          re(domPN(el));
+        }
+      }, showProgress: function() {
+        showProgress(el, 'post_inline_progress', 'post_inline_progress', true);
+      }, hideProgress: function() {
+        re('post_inline_progress');
       }
-    }, showProgress: function() {
-      hide(el);
-      var prg = showProgress(domPN(el));
-      if (!bl) setStyle(prg, {display: 'inline-block'});
-    }, hideProgress: function() {
-      show(el);
-      hideProgress(domPN(el));
-    }});
+    });
   },
   blockEx: function(gid, mid) {
     showBox('groupsedit.php', {act: 'bl_edit', name: 'id' + mid, gid: gid, auto: 1}, {stat: ['page.css', 'ui_controls.js', 'ui_controls.css'], dark: 1});
@@ -1916,6 +1923,14 @@ var Wall = {
 
     uiTabs.switchTab(el);
     uiTabs.hideProgress(el);
+
+    if (type === 'top') {
+      cur.baseWallModule = cur.module;
+      cur.module = 'wall_top';
+    } else if (cur.baseWallModule) {
+      cur.module = cur.baseWallModule;
+      delete cur.baseWallModule;
+    }
 
     if (Wall.hasPosts()) {
       Wall.update();
@@ -2841,6 +2856,7 @@ var Wall = {
         noStickers: true,
         onSend: Wall.sendPost,
         noEnterSend: true,
+        ref: 'post',
         checkEditable: Wall.postChanged,
         initUploadForImagePasteCallback: function(txt, addMedia, blob) {
           if (window.Upload) {
@@ -3754,6 +3770,7 @@ var Wall = {
         rPointer: true,
         controlsCont: cont,
         shouldFocus: true,
+        ref: 'reply',
         onSend: function() {
           Wall.sendReply(post);
           txt.blur();
@@ -7044,6 +7061,7 @@ var Wall = {
         setTimeout(function() {
           setStyle(cont, {left: floatval(getStyle(cont, 'left')) + getXY(iconEl)[0] - icon_left});
         }, 10);
+        statlogsValueEvent('likes_show', domData(el, 'shown'));
       },
       typeClass: 'like_tt',
       className: opts.cl || ''
