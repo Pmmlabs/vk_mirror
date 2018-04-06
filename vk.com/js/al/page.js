@@ -7629,7 +7629,7 @@ Composer = {
       }
     }
 
-    if (!canCreateArticle || !isArticleEditorAvailable() || !cur.options.articleConvertExpGroup) {
+    if (!canCreateArticle || !isArticleEditorAvailable()) {
       return false
     }
 
@@ -7655,18 +7655,8 @@ Composer = {
     if (Composer.isArticleConvertSuggestAvailable(composer)) {
       if (!composer.articleConvertEl) {
         var inputWrapEl = gpeByClass('post_field_wrap', composer.input)
-        var btnClass = 'article_post_convert_toggle'
-        var btnText = getLang('profile_convert_to_article')
 
-        if (cur.options.articleConvertExpGroup == 2) {
-          btnClass = 'round_button'
-          btnText = getLang('profile_convert_to_article_short')
-        } else if (cur.options.articleConvertExpGroup == 3) {
-          btnClass = 'flat_button secondary'
-          btnText = getLang('profile_convert_to_article_short')
-        }
-
-        composer.articleConvertEl = se('<button class="article_post_convert ' + btnClass + '">' + btnText + '</button>')
+        composer.articleConvertEl = se('<button class="article_post_convert round_button">' + getLang('profile_convert_to_article_short') + '</button>')
         inputWrapEl.appendChild(composer.articleConvertEl)
 
         removeEvent(composer.articleConvertEl)
